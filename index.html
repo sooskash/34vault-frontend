@@ -194,7 +194,8 @@
   </div>
 
   <script>
-    const API = "http://localhost:3001";
+    const API = "https://three4vault-backend.onrender.com
+";
 
     let allComics = [];
     let filteredComics = [];
@@ -298,7 +299,8 @@ async function initEditPermission() {
         console.error("Load failed:", err);
         loading.style.display = "none";
         empty.style.display = "block";
-        empty.textContent = "Failed to load comics. Make sure the backend is running on http://localhost:3001";
+        empty.textContent = "Failed to load comics. Make sure the backend is running on https://three4vault-backend.onrender.com
+";
       }
     }
 
