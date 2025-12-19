@@ -179,7 +179,8 @@
   </div>
 
   <script>
-    const API = "http://localhost:3001";
+    const API = "https://three4vault-backend.onrender.com
+";
 
     const pillsEl = document.getElementById("statusPills");
     const msgEl = document.getElementById("msg");
@@ -245,7 +246,8 @@
       } catch (e) {
         console.error(e);
         pillsEl.appendChild(pill("Backend not reachable", "warn"));
-        setMsg("Could not reach backend. Make sure http://localhost:3001 is running.", "error");
+        setMsg("Could not reach backend. Make sure https://three4vault-backend.onrender.com
+ is running.", "error");
         uploadBtn.disabled = true;
       }
     }
