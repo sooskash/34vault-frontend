@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Upload Comic</title>
+  <style>
+    :root{
+      --bg:#0f1013; --panel:#171823; --panel2:#1e2030;
+      --text:#f2f2f2; --muted:#a9abb7; --accent:#e11d48;
+      --navh:64px; --toph:56px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);
+      padding-bottom:calc(var(--navh) + 12px);
+    }
+    a{color:inherit;text-decoration:none}
+
+    .topbar{
+      position:sticky;top:0;z-index:50;height:var(--toph);
+      display:flex;align-items:center;gap:10px;padding:10px 12px;
+      background:#0b0c10;border-bottom:1px solid #222;
+    }
+    .brand{font-weight:800;letter-spacing:.3px;white-space:nowrap;flex:0 0 auto;}
+    .spacer{flex:1}
+    .iconbtn{
+      width:38px;height:38px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--panel);border:1px solid #2a2b35;cursor:pointer;user-select:none;
+      flex:0 0 auto;
+    }
+
+    .section{padding:12px;}
+    @media (min-width:900px){
+      body{padding-bottom:12px;}
+      .bottomnav{display:none;}
+      .section{max-width:860px;margin:0 auto;}
+      .topbar{max-width:860px;margin:0 auto;}
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid #2a2b35;
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:12px;
+    }
+    .title{font-weight:900;font-size:16px;margin-bottom:4px;}
+    .sub{color:var(--muted);font-size:12px;font-weight:700;}
+
+    .label{color:var(--muted);font-size:12px;font-weight:800;margin:12px 0 6px;}
+    .input, .textarea, .file{
+      width:100%;
+      border-radius:12px;border:1px solid #2a2b35;
+      background:#10111a;color:var(--text);
+      padding:10px 12px;outline:none;font-size:14px;
+    }
+    .input{height:44px;}
+    .textarea{min-height:110px;resize:vertical;}
+    .file{padding:10px;}
+
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    @media (max-width:640px){ .row2{grid-template-columns:1fr;} }
+
+    .btnRow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+    .btn{
+      height:44px;padding:0 14px;border-radius:12px;border:1px solid #2a2b35;
+      background:var(--panel2);color:var(--text);cursor:pointer;font-weight:900;
+      user-select:none;
+    }
+    .btn.primary{border-color:rgba(225,29,72,.8);}
+    .btn:disabled{opacity:.6;cursor:not-allowed;}
+
+    .msg{margin-top:10px;color:var(--muted);font-size:12px;font-weight:700;white-space:pre-wrap;}
+    .msg.ok{color:#b3ffcf;}
+    .msg.error{color:#ffb4b4;}
+
+    .pillRow{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;}
+    .pill{
+      height:26px;padding:0 10px;border-radius:999px;
+      background:var(--panel2);border:1px solid #2a2b35;
+      color:var(--muted);font-size:12px;font-weight:900;
+      display:inline-flex;align-items:center;gap:6px;
+      white-space:nowrap;
+    }
+    .pill.ok{border-color:rgba(179,255,207,.35); color:#b3ffcf;}
+    .pill.warn{border-color:rgba(255,180,180,.35); color:#ffb4b4;}
+
+    .bottomnav{
+      position:fixed;left:0;right:0;bottom:0;z-index:60;height:var(--navh);
+      background:#0b0c10;border-top:1px solid #222;
+      display:flex;justify-content:space-around;align-items:center;padding:6px;
+    }
+    .navitem{width:20%;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;user-select:none;cursor:pointer;}
+    .navdot{width:30px;height:30px;border-radius:10px;background:var(--panel);border:1px solid #2a2b35;display:flex;align-items:center;justify-content:center;font-size:14px;}
+    .active{color:var(--accent);}
+    .active .navdot{border-color:var(--accent);}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="iconbtn" onclick="history.length>1?history.back():location.href='index.html'" title="Back">←</div>
+    <div class="brand">Upload</div>
+    <div class="spacer"></div>
+    <div class="iconbtn" onclick="location.href='profile.html'" title="Profile">👤</div>
+  </div>
+
+  <div class="section">
+    <div class="card">
+      <div class="title">Upload a Comic</div>
+      <div class="sub">Uploads cover + pages to your backend and creates/updates the comic record.</div>
+
+      <div class="pillRow" id="statusPills"></div>
+
+      <div class="row2">
+        <div>
+          <div class="label">Slug (folder name)</div>
+          <input id="slug" class="input" placeholder="comic-3" />
+          <div class="sub">Must match your folder like <b>uploads/&lt;slug&gt;/</b>. Use lowercase + dashes.</div>
+        </div>
+        <div>
+          <div class="label">Title</div>
+          <input id="title" class="input" placeholder="My New Comic" />
+        </div>
+      </div>
+
+      <div class="label">Description</div>
+      <textarea id="description" class="textarea" placeholder="Short description..."></textarea>
+
+      <div class="row2">
+        <div>
+          <div class="label">Category (optional)</div>
+          <input id="category" class="input" placeholder="Horror" />
+        </div>
+        <div>
+          <div class="label">Tags (comma separated)</div>
+          <input id="tags" class="input" placeholder="horror, scary, suspense" />
+        </div>
+      </div>
+
+      <div class="label">Cover (cover.jpg)</div>
+      <input id="cover" class="file" type="file" accept="image/*" />
+
+      <div class="label">Pages (1.jpg, 2.jpg, ...)</div>
+      <input id="pages" class="file" type="file" accept="image/*" multiple />
+
+      <div class="btnRow">
+        <button id="uploadBtn" class="btn primary" type="button">Upload</button>
+        <button class="btn" type="button" onclick="location.href='index.html'">Back to Home</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+      <div class="btnRow" id="afterBtns" style="display:none;">
+        <button id="openReader" class="btn" type="button">Open Reader</button>
+        <button id="openApi" class="btn" type="button">Open Comic JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottomnav">
+    <div class="navitem" onclick="location.href='index.html'">
+      <div class="navdot">🏠</div><div>Home</div>
+    </div>
+    <div class="navitem" onclick="location.href='authors.html'">
+      <div class="navdot"✏️</div><div>Authors</div>
+    </div>
+    <div class="navitem" onclick="location.href='request.html'">
+      <div class="navdot">➕</div><div>Request</div>
+    </div>
+    <div class="navitem active">
+      <div class="navdot">⬆️</div><div>Upload</div>
+    </div>
+    <div class="navitem" onclick="location.href='profile.html'">
+      <div class="navdot">👤</div><div>Me</div>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:3001";
+
+    const pillsEl = document.getElementById("statusPills");
+    const msgEl = document.getElementById("msg");
+    const afterBtns = document.getElementById("afterBtns");
+
+    const slugEl = document.getElementById("slug");
+    const titleEl = document.getElementById("title");
+    const descEl = document.getElementById("description");
+    const catEl = document.getElementById("category");
+    const tagsEl = document.getElementById("tags");
+    const coverEl = document.getElementById("cover");
+    const pagesEl = document.getElementById("pages");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    let me = null;
+
+    function setMsg(text, kind) {
+      msgEl.className = "msg" + (kind ? (" " + kind) : "");
+      msgEl.textContent = text || "";
+    }
+
+    function pill(text, kind) {
+      const d = document.createElement("div");
+      d.className = "pill" + (kind ? (" " + kind) : "");
+      d.textContent = text;
+      return d;
+    }
+
+    function normalizeSlug(s) {
+      return String(s || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\-]/g, "-")
+        .replace(/\-+/g, "-")
+        .replace(/^\-|\-$/g, "");
+    }
+
+    async function loadMe() {
+      pillsEl.innerHTML = "";
+      try {
+        const res = await fetch(`${API}/api/me`, { credentials: "include" });
+        if (res.status === 401) {
+          pillsEl.appendChild(pill("Not logged in", "warn"));
+          setMsg("You must log in first.\nGo to profile.html and log in.", "error");
+          uploadBtn.disabled = true;
+          return;
+        }
+        if (!res.ok) throw new Error("Failed /api/me");
+        me = await res.json();
+
+        const role = String(me.role || "USER").toUpperCase();
+        pillsEl.appendChild(pill(`Logged in: ${me.displayName || me.email}`, "ok"));
+        pillsEl.appendChild(pill(`Role: ${role}`, role === "OWNER" || role === "ADMIN" || role === "AUTHOR" ? "ok" : "warn"));
+
+        const allowed = ["OWNER","ADMIN","AUTHOR"].includes(role);
+        if (!allowed) {
+          setMsg("Your account does not have upload permission.\nAsk an admin to set your role to AUTHOR/ADMIN/OWNER.", "error");
+          uploadBtn.disabled = true;
+        } else {
+          setMsg("", "");
+          uploadBtn.disabled = false;
+        }
+      } catch (e) {
+        console.error(e);
+        pillsEl.appendChild(pill("Backend not reachable", "warn"));
+        setMsg("Could not reach backend. Make sure http://localhost:3001 is running.", "error");
+        uploadBtn.disabled = true;
+      }
+    }
+
+    async function uploadComic() {
+      const role = String(me?.role || "USER").toUpperCase();
+      const slug = normalizeSlug(slugEl.value);
+      const title = String(titleEl.value || "").trim();
+      const description = String(descEl.value || "").trim();
+      const category = String(catEl.value || "").trim();
+      const tags = String(tagsEl.value || "").trim();
+
+      if (!slug) return setMsg("Slug is required (example: comic-3).", "error");
+      if (!title) return setMsg("Title is required.", "error");
+      if (!coverEl.files?.length) return setMsg("Cover file is required.", "error");
+      if (!pagesEl.files?.length) return setMsg("At least 1 page is required.", "error");
+
+      // Build form-data
+      const fd = new FormData();
+      fd.append("slug", slug);
+      fd.append("title", title);
+      fd.append("description", description);
+      if (category) fd.append("category", category);
+      if (tags) fd.append("tags", tags);
+
+      fd.append("cover", coverEl.files[0]);
+
+      // Sort pages by filename if possible (1.jpg, 2.jpg...)
+      const pageFiles = Array.from(pagesEl.files);
+      pageFiles.sort((a,b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
+      for (const f of pageFiles) fd.append("pages", f);
+
+      // Pick endpoint by role
+      const endpoint = (role === "OWNER" || role === "ADMIN")
+        ? "/api/admin/comics/upload"
+        : "/api/comics/upload";
+
+      uploadBtn.disabled = true;
+      setMsg("Uploading... (don’t close the tab)", "");
+      afterBtns.style.display = "none";
+
+      try {
+        const res = await fetch(`${API}${endpoint}`, {
+          method: "POST",
+          credentials: "include",
+          body: fd
+        });
+
+        if (res.status === 401) {
+          setMsg("Not logged in. Go to profile.html and log in.", "error");
+          uploadBtn.disabled = false;
+          return;
+        }
+        if (res.status === 403) {
+          setMsg("Forbidden. Your role is not allowed to upload to this endpoint.", "error");
+          uploadBtn.disabled = false;
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          setMsg("Upload failed.\n" + JSON.stringify(data, null, 2), "error");
+          uploadBtn.disabled = false;
+          return;
+        }
+
+        const comic = data.comic;
+        setMsg(
+          `✅ Upload success!\nSlug: ${comic.slug}\nTitle: ${comic.title}\nPages detected: ${(comic.pages||[]).length}\nCover: ${comic.coverUrl}`,
+          "ok"
+        );
+
+        // Buttons
+        afterBtns.style.display = "flex";
+        document.getElementById("openReader").onclick = () => location.href = `reader.html?slug=${encodeURIComponent(comic.slug)}`;
+        document.getElementById("openApi").onclick = () => window.open(`${API}/api/comics/slug/${encodeURIComponent(comic.slug)}`, "_blank");
+
+        uploadBtn.disabled = false;
+      } catch (e) {
+        console.error(e);
+        setMsg("Upload failed (network error). Check backend console.", "error");
+        uploadBtn.disabled = false;
+      }
+    }
+
+    uploadBtn.addEventListener("click", uploadComic);
+
+    // Auto-normalize slug as you type
+    slugEl.addEventListener("input", () => {
+      const n = normalizeSlug(slugEl.value);
+      if (slugEl.value !== n) slugEl.value = n;
+    });
+
+    loadMe();
+  </script>
+</body>
+</html>

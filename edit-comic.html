@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Edit Comic</title>
+  <style>
+    body{margin:0;font-family:Arial;background:#0f1013;color:#f2f2f2}
+    .wrap{max-width:900px;margin:0 auto;padding:16px}
+    .card{background:#171823;border:1px solid #2a2b35;border-radius:14px;padding:14px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .field{flex:1;min-width:240px}
+    label{display:block;color:#a9abb7;font-size:12px;font-weight:800;margin:10px 0 6px}
+    input,textarea{
+      width:100%;border-radius:12px;border:1px solid #2a2b35;background:#10111a;
+      color:#f2f2f2;padding:10px 12px;outline:none
+    }
+    textarea{min-height:110px;resize:vertical}
+    .btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    button{
+      height:44px;padding:0 14px;border-radius:12px;border:1px solid #2a2b35;
+      background:#1e2030;color:#f2f2f2;cursor:pointer;font-weight:900
+    }
+    .primary{border-color:#e11d48}
+    .msg{margin-top:10px;color:#a9abb7;white-space:pre-wrap}
+    .err{color:#ffb4b4}
+    .ok{color:#b3ffcf}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Edit Comic</h2>
+  <div class="card">
+    <div class="row">
+      <div class="field">
+        <label>Slug (read-only)</label>
+        <input id="slug" disabled />
+      </div>
+      <div class="field">
+        <label>Title</label>
+        <input id="title" />
+      </div>
+    </div>
+
+    <label>Description</label>
+    <textarea id="description"></textarea>
+
+    <div class="row">
+      <div class="field">
+        <label>Category</label>
+        <input id="category" placeholder="e.g. Horror" />
+      </div>
+      <div class="field">
+        <label>Tags (comma separated)</label>
+        <input id="tags" placeholder="horror, scary, suspense" />
+      </div>
+    </div>
+
+    <div class="btnRow">
+      <button id="save" class="primary" type="button">Save Changes</button>
+      <button id="back" type="button">Back</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+  const API = "http://localhost:3001";
+
+  const qs = new URLSearchParams(location.search);
+  const slug = qs.get("slug");
+
+  const elSlug = document.getElementById("slug");
+  const elTitle = document.getElementById("title");
+  const elDesc = document.getElementById("description");
+  const elCat = document.getElementById("category");
+  const elTags = document.getElementById("tags");
+  const msg = document.getElementById("msg");
+
+  function setMsg(text, kind="") {
+    msg.className = "msg " + kind;
+    msg.textContent = text || "";
+  }
+
+  async function loadComic() {
+    if (!slug) return setMsg("Missing ?slug=...", "err");
+
+    setMsg("Loading...");
+    const res = await fetch(`${API}/api/comics/slug/${encodeURIComponent(slug)}`);
+    if (!res.ok) return setMsg("Could not load comic.", "err");
+
+    const c = await res.json();
+    elSlug.value = c.slug || "";
+    elTitle.value = c.title || "";
+    elDesc.value = c.description || "";
+    elCat.value = c.category || "";
+    elTags.value = (c.tags || []).join(", ");
+    setMsg("");
+  }
+
+  async function saveComic() {
+    setMsg("Saving...");
+
+    const payload = {
+      title: elTitle.value.trim(),
+      description: elDesc.value.trim(),
+      category: elCat.value.trim() || null,
+      tags: elTags.value.split(",").map(t => t.trim()).filter(Boolean),
+    };
+
+    const res = await fetch(`${API}/api/admin/comics/${encodeURIComponent(slug)}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.ok) {
+      const errText =
+        typeof data.error === "string"
+          ? data.error
+          : JSON.stringify(data, null, 2);
+      return setMsg(errText || `Save failed (${res.status})`, "err");
+    }
+
+    setMsg("Saved ✅", "ok");
+  }
+
+  document.getElementById("save").addEventListener("click", saveComic);
+  document.getElementById("back").addEventListener("click", () => history.back());
+
+  loadComic();
+</script>
+</body>
+</html>

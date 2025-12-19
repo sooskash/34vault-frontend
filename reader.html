@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reader</title>
+  <style>
+    :root{
+      --bg:#0f1013;
+      --panel:#171823;
+      --panel2:#1e2030;
+      --panel3:#0b0c10;
+      --text:#f2f2f2;
+      --muted:#a9abb7;
+      --accent:#e11d48;
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+
+      --topbarH:56px;
+      --controlsH:64px;
+      --safeTop: calc(var(--topbarH) + var(--controlsH));
+      --pageGap: 12px;
+      --maxW: 980px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      padding-top: calc(var(--safeTop) + env(safe-area-inset-top));
+    }
+    a{color:inherit;text-decoration:none}
+
+
+    /* Sticky header wrapper so content never slides under it */
+    .headerSticky{position:fixed;top:0;left:0;right:0;z-index:3000;}
+
+    /* ===== Clean top bar ===== */
+    .topbar{
+      position:relative; left:0; right:0; top:0; z-index:3000;
+      height:var(--topbarH);
+      background: linear-gradient(180deg, rgba(11,12,16,.98), rgba(11,12,16,.92));
+      border-bottom:1px solid #222;
+      box-shadow: var(--shadow);
+    }
+    .topbarInner{
+      max-width:var(--maxW);
+      margin:0 auto;
+      height:100%;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0 12px;
+    }
+    .brand{
+      font-weight:900;
+      letter-spacing:.3px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+      min-width:0;
+    }
+    .brandDot{
+      width:34px;height:34px;border-radius:12px;
+      background:var(--panel);
+      border:1px solid #2a2b35;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;color:var(--muted);
+      flex:0 0 auto;
+    }
+    .brandText{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size:14px;
+    }
+    .spacer{flex:1}
+    .iconbtn{
+      width:38px;height:38px;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--panel);
+      border:1px solid #2a2b35;
+      cursor:pointer;
+      user-select:none;
+      flex:0 0 auto;
+    }
+
+    /* ===== Controls bar (clean, compact) ===== */
+    .controls{
+      position:relative; left:0; right:0; top:0;
+      z-index:2900;
+      background: rgba(23,24,35,.92);
+      border-bottom:1px solid #222;
+      backdrop-filter: blur(10px);
+    }
+    .controlsInner{
+      max-width:var(--maxW);
+      margin:0 auto;
+      height:var(--controlsH);
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .titleBox{min-width:0; flex:1;}
+    .titleLine{
+      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size:14px;
+      line-height:1.1;
+    }
+    .subLine{
+      margin-top:4px;
+      color:var(--muted);
+      font-weight:800;
+      font-size:12px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .subLine span{white-space:nowrap}
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      height:38px;
+      padding:0 12px;
+      border-radius:14px;
+      background:var(--panel2);
+      border:1px solid #2a2b35;
+      color:var(--text);
+      font-weight:900;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .pill:active{transform: translateY(1px);}
+    .pill.active{ border-color: rgba(225,29,72,.85); }
+    .pill .muted{color:var(--muted);font-weight:900}
+
+    .select{
+      height:38px;
+      border-radius:14px;
+      border:1px solid #2a2b35;
+      background:var(--panel2);
+      color:var(--text);
+      padding:0 10px;
+      font-weight:900;
+      font-size:12px;
+      outline:none;
+      cursor:pointer;
+      max-width:160px;
+    }
+
+    .tog{
+      display:flex; align-items:center; gap:8px;
+      padding:0 10px;
+      height:38px;
+      border-radius:14px;
+      border:1px solid #2a2b35;
+      background:var(--panel2);
+      user-select:none;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .switch{
+      width:36px;height:20px;border-radius:999px;
+      background:#0f1013;
+      border:1px solid #2a2b35;
+      position:relative;
+      flex:0 0 auto;
+    }
+    .knob{
+      width:16px;height:16px;border-radius:999px;
+      background:var(--muted);
+      position:absolute; top:1px; left:1px;
+      transition: all .15s ease;
+    }
+    .tog.on{ border-color: rgba(225,29,72,.45); }
+    .tog.on .knob{ left:18px; background: var(--accent); }
+
+    /* Layout below bars */
+    .wrap{max-width:var(--maxW);margin:0 auto;padding:0 12px 26px;
+      padding-top: 12px;}
+    .pages{padding-top:12px;}
+    .pageWrap{ position:relative; margin:0 0 var(--pageGap); }
+    .pageImg{
+      width:100%;
+      display:block;
+      background:#222;
+      user-select:none;
+      -webkit-user-drag:none;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: 0 8px 22px rgba(0,0,0,.28);
+    }
+    .pageBadge{
+      position:absolute;
+      right:10px;
+      top:10px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color:rgba(255,255,255,.82);
+      font-size:11px;
+      font-weight:900;
+      pointer-events:none;
+    }
+
+    /* ===== Display modes ===== */
+    body[data-mode="fit-width"] .pageImg{ width:100%; height:auto; }
+    body[data-mode="fit-height"] .pageImg{
+      width:auto; max-width:100%;
+      height: calc(100vh - var(--safeTop) - 28px);
+      max-height: calc(100vh - var(--safeTop) - 28px);
+      object-fit: contain;
+      margin: 0 auto;
+    }
+    body[data-mode="fit"] .pageImg{ width:100%; height:auto; }
+    @media (min-width: 900px){
+      body[data-mode="fit"] .pageImg{
+        width:auto; max-width:100%;
+        height: calc(100vh - var(--safeTop) - 28px);
+        object-fit: contain;
+        margin: 0 auto;
+      }
+    }
+    body[data-mode="full"] .pageImg{
+      width:auto; max-width:none; height:auto; margin:0;
+    }
+    body[data-mode="tiny"] .pageImg{
+      width:100%;
+      max-width:520px;
+      margin: 0 auto;
+    }
+
+    /* Back to top button */
+    #toTopBtn{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:2600;
+      display:none;
+      height:44px;
+      padding:0 14px;
+      border-radius:14px;
+      border:1px solid #2a2b35;
+      background:var(--panel2);
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+    }
+    #toTopBtn:active{ transform: translateY(1px); }
+
+    /* Fullscreen overlay (kept) */
+    #fsOverlay{
+      position:fixed;
+      inset:0;
+      z-index:4000;
+      display:none;
+      background: rgba(0,0,0,.92);
+    }
+    #fsOverlay.show{ display:block; }
+
+    .fsTop{
+      position:absolute;
+      top:12px; left:12px; right:12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      z-index:4010;
+      pointer-events:auto;
+    }
+    .fsBar{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(11,12,16,.82);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      color:var(--text);
+      font-weight:900;
+      user-select:none;
+    }
+    .fsBtn{
+      width:44px;height:44px;border-radius:14px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      color:white;
+      font-size:14px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      user-select:none;
+    }
+    .fsBtn:hover{ background:rgba(255,255,255,.18); }
+    .fsBtn:active{ transform:scale(.97); }
+
+    .fsImgWrap{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:72px 14px 14px;
+    }
+    #fsImg{
+      max-width:100%;
+      max-height:100%;
+      object-fit:contain;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      background:#111;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    .fsZone{
+      position:absolute; top:0; bottom:0; width:50%;
+      z-index:4005; cursor:pointer;
+    }
+    .fsZone.left{ left:0; }
+    .fsZone.right{ right:0; }
+
+    /* Toast */
+    #toast{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:72px;
+      z-index:5000;
+      background:rgba(11,12,16,.9);
+      border:1px solid #222;
+      color:var(--text);
+      font-weight:900;
+      font-size:12px;
+      padding:10px 12px;
+      border-radius:14px;
+      box-shadow: var(--shadow);
+      display:none;
+      max-width: min(520px, calc(100% - 24px));
+      text-align:center;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+
+    /* Category + Tags chips */
+    .chips{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .chip{
+      height:24px;
+      padding:0 10px;
+      border-radius:999px;
+      border:1px solid #2a2b35;
+      background: rgba(30,32,48,.9);
+      color: var(--muted);
+      font-weight:900;
+      font-size:11px;
+      white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .chip strong{ color: var(--text); font-weight:900; }
+    .chip.accent{ border-color: rgba(225,29,72,.55); color: var(--text); }
+
+    /* Mobile cleanup: hide crowded actions, use menu */
+    #menuBtn{ display:none; }
+    @media (max-width: 640px){
+      .controlsInner{ gap:8px; }
+      .subLine{display:none;}
+      #orderBtn, #bottomBtn, #likeBtn, #dislikeBtn, #favBtn, #bmPageBtn{ display:none; }
+      #menuBtn{ display:inline-flex; }
+      .select{ max-width:122px; }
+      .tog{ padding:0 8px; }
+      .brandText{ display:none; } /* keeps it super clean */
+    }
+
+    /* Bottom sheet menu */
+    #sheetBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      z-index:6000;
+      display:none;
+    }
+    #sheet{
+      position:fixed;
+      left:12px; right:12px; bottom:12px;
+      z-index:6100;
+      display:none;
+      background: rgba(23,24,35,.96);
+      border:1px solid #2a2b35;
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      padding:12px;
+      max-width: var(--maxW);
+      margin: 0 auto;
+    }
+    .sheetGrid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+    .sheetBtn{
+      height:44px;
+      border-radius:14px;
+      border:1px solid #2a2b35;
+      background: var(--panel2);
+      color: var(--text);
+      font-weight:900;
+      font-size:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      user-select:none;
+      cursor:pointer;
+    }
+    .sheetBtn:active{ transform: translateY(1px); }
+    .sheetTopRow{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .sheetTitle{ font-weight:900; color:var(--text); }
+    .sheetClose{
+      width:38px;height:38px;border-radius:12px;
+      border:1px solid #2a2b35;background:var(--panel2);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;font-weight:900;
+    }
+
+
+    /* Mobile: hide some labels to keep clean */
+    @media (max-width: 560px){
+      .subLine{display:none;}
+      .select{max-width:132px;}
+      .titleLine{font-size:13px;}
+    }
+    /* Cleaner mobile controls: hide extra pills, use menu */
+    @media (max-width: 780px){
+      #orderBtn,#bottomBtn,#likeBtn,#dislikeBtn,#favBtn,#bmPageBtn{display:none !important;}
+      .controlsInner{gap:8px;}
+      .chips{max-height:26px;overflow:hidden;}
+    }
+    /* Make chips horizontal scroll and non-wrapping on small screens */
+    @media (max-width: 560px){
+      .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+      .chips::-webkit-scrollbar{display:none;}
+    }
+
+  </style>
+</head>
+<body data-mode="fit">
+
+  <div class="headerSticky">
+
+  <!-- Topbar: brand + profile -->
+  <div class="topbar">
+    <div class="topbarInner">
+      <div class="iconbtn" id="backBtn" title="Back">←</div>
+      <div class="brand" id="brandBtn" title="Home">
+        <div class="brandDot">C</div>
+        <div class="brandText" id="siteName">Comics</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="iconbtn" id="profileBtn" title="Profile">👤</div>
+    </div>
+  </div>
+
+  <!-- Controls: comic info + actions -->
+  <div class="controls">
+    <div class="controlsInner">
+      <div class="titleBox">
+        <div class="titleLine" id="titleLine">Loading…</div>
+        <div class="subLine">
+          <span id="authorLine"></span>
+          <span id="pageMeta">Page — / —</span>
+          <span id="bmMeta"></span>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <select class="select" id="modeSel" title="Page fit">
+        <option value="fit">Fit</option>
+        <option value="fit-height">Fit height</option>
+        <option value="fit-width">Fit width</option>
+        <option value="full">Full size</option>
+        <option value="tiny">Tiny</option>
+      </select>
+
+      <div class="tog" id="tapToggle" title="Tap pages to cycle display">
+        <div class="switch"><div class="knob"></div></div>
+        Tap cycle
+      </div>
+
+      <div class="pill" id="orderBtn" title="Reverse page order">🔁 <span class="muted" id="orderLabel">Normal</span></div>
+      <div class="pill" id="bottomBtn" title="Go to bottom">⬇️ <span class="muted">Bottom</span></div>
+
+      <div class="pill" id="likeBtn" title="Like">👍</div>
+      <div class="pill" id="dislikeBtn" title="Dislike">👎</div>
+      <div class="pill" id="favBtn" title="Favorite">⭐</div>
+
+      <div class="pill" id="bmPageBtn" title="Bookmarks">📚</div>
+      <div class="pill" id="menuBtn" title="Menu">☰</div>
+      <div class="pill" id="bmBtn" title="Bookmark current page">BM</div>
+    </div>
+  </div>
+
+  </div>
+
+  <div class="wrap">
+    <div class="pages" id="pages"></div>
+  </div>
+
+  <button id="toTopBtn" type="button">↑ Top</button>
+
+  <!-- Fullscreen overlay -->
+  <div id="fsOverlay">
+    <div class="fsTop" id="fsTop">
+      <div class="fsBtn" id="fsClose" title="Close">✕</div>
+      <div class="fsBar" id="fsBar">
+        <span id="fsTitle" style="opacity:.9;"></span>
+        <span style="opacity:.55;">•</span>
+        <span id="fsPage">Page — / —</span>
+      </div>
+      <div class="fsBtn" id="fsBookmark" title="Bookmark this page">BM</div>
+    </div>
+
+    <div class="fsImgWrap" id="fsImgWrap">
+      <img id="fsImg" alt="Page" />
+    </div>
+
+    <div class="fsZone left" id="fsLeft"></div>
+    <div class="fsZone right" id="fsRight"></div>
+  </div>
+
+  <div id="toast"></div>
+
+
+  <div id="sheetBack"></div>
+  <div id="sheet">
+    <div class="sheetTopRow">
+      <div class="sheetTitle">Actions</div>
+      <div class="sheetClose" id="sheetClose">✕</div>
+    </div>
+    <div class="sheetGrid">
+      <div class="sheetBtn" id="mLike">👍 Like</div>
+      <div class="sheetBtn" id="mDislike">👎 Dislike</div>
+      <div class="sheetBtn" id="mFav">⭐ Fav</div>
+      <div class="sheetBtn" id="mMarks">📚 Marks</div>
+
+      <div class="sheetBtn" id="mOrder">🔁 Order</div>
+      <div class="sheetBtn" id="mBottom">⬇️ Bottom</div>
+      <div class="sheetBtn" id="mTop">⬆️ Top</div>
+      <div class="sheetBtn" id="mBM">BM Mark</div>
+    </div>
+  </div>
+
+
+  <script>
+    const API = "http://localhost:3001";
+
+    // Storage keys
+    const FAV_KEY = "favoriteSlugs";
+    const LIKE_KEY = "likedSlugs";
+    const DISLIKE_KEY = "dislikedSlugs";
+    const BM_KEY_PREFIX = "bookmark:";  // bookmark:<slug> => pageNumber (1-based)
+    const VIEWED_KEY_PREFIX = "viewed:"; // sessionStorage
+
+    const MODES = ["fit","fit-height","fit-width","full","tiny"];
+
+    function safeJsonParse(s, fallback) { try { return JSON.parse(s); } catch { return fallback; } }
+    function getSet(key) {
+      const arr = safeJsonParse(localStorage.getItem(key) || "[]", []);
+      return new Set(Array.isArray(arr) ? arr : []);
+    }
+    function setSet(key, set) { localStorage.setItem(key, JSON.stringify(Array.from(set))); }
+
+    function escapeHtml(str){
+      return String(str||"")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll("\"","&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function toast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg || "";
+      t.style.display = "block";
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => t.style.display = "none", 1300);
+    }
+
+    const qs = new URLSearchParams(location.search);
+    const slug = qs.get("slug");
+
+    // Top nav
+    document.getElementById("brandBtn").addEventListener("click", () => location.href = "index.html");
+
+    // Back button
+    document.getElementById("backBtn").addEventListener("click", () => {
+      if (history.length > 1) history.back();
+      else location.href = "index.html";
+    });
+
+
+    document.getElementById("profileBtn").addEventListener("click", () => location.href = "profile.html");
+
+    // UI elements
+    const titleLine = document.getElementById("titleLine");
+    const authorLine = document.getElementById("authorLine");
+    const pageMeta = document.getElementById("pageMeta");
+    const bmMeta = document.getElementById("bmMeta");
+    const chipsEl = document.getElementById("chips");
+
+    const likeBtn = document.getElementById("likeBtn");
+    const dislikeBtn = document.getElementById("dislikeBtn");
+    const favBtn = document.getElementById("favBtn");
+    const bmBtn = document.getElementById("bmBtn");
+    const bmPageBtn = document.getElementById("bmPageBtn");
+
+    const modeSel = document.getElementById("modeSel");
+    const tapToggle = document.getElementById("tapToggle");
+    const orderBtn = document.getElementById("orderBtn");
+    const orderLabel = document.getElementById("orderLabel");
+    const bottomBtn = document.getElementById("bottomBtn");
+    const menuBtn = document.getElementById("menuBtn");
+    const sheetBack = document.getElementById("sheetBack");
+    const sheet = document.getElementById("sheet");
+    const sheetClose = document.getElementById("sheetClose");
+
+    const pagesEl = document.getElementById("pages");
+    const toTopBtn = document.getElementById("toTopBtn");
+
+    // Fullscreen
+    const fsOverlay = document.getElementById("fsOverlay");
+    const fsImg = document.getElementById("fsImg");
+    const fsTitle = document.getElementById("fsTitle");
+    const fsPage = document.getElementById("fsPage");
+    const fsClose = document.getElementById("fsClose");
+    const fsLeft = document.getElementById("fsLeft");
+    const fsRight = document.getElementById("fsRight");
+    const fsTop = document.getElementById("fsTop");
+    const fsBookmark = document.getElementById("fsBookmark");
+
+    let comic = null;
+    let pages = [];
+    let currentPage = 1;
+
+    let fullscreenMode = false;
+    let fsPageNum = 1;
+
+    // ===== Reader prefs =====
+    const MODE_KEY = `readerMode:${slug || ""}`;
+    const ORDER_KEY = `readerOrder:${slug || ""}`; // normal|reverse
+    const TAP_KEY = `readerTapCycle:${slug || ""}`; // 1|0
+
+    function getMode(){
+      const m = localStorage.getItem(MODE_KEY);
+      return MODES.includes(m) ? m : "fit";
+    }
+    function setMode(m){
+      localStorage.setItem(MODE_KEY, m);
+      document.body.setAttribute("data-mode", m);
+      if (modeSel) modeSel.value = m;
+    }
+    function cycleMode(){
+      const cur = getMode();
+      const idx = MODES.indexOf(cur);
+      const next = MODES[(idx + 1) % MODES.length];
+      setMode(next);
+      toast("Mode: " + modeSel.options[modeSel.selectedIndex].text);
+    }
+
+    function getTapCycle(){ return localStorage.getItem(TAP_KEY) === "1"; }
+    function setTapCycle(v){
+      localStorage.setItem(TAP_KEY, v ? "1" : "0");
+      tapToggle.classList.toggle("on", v);
+    }
+
+    function getOrder(){ return localStorage.getItem(ORDER_KEY) === "reverse" ? "reverse" : "normal"; }
+    function setOrder(v){
+      localStorage.setItem(ORDER_KEY, v);
+      orderLabel.textContent = v === "reverse" ? "Reversed" : "Normal";
+    }
+    function toggleOrder(){
+      const next = getOrder() === "normal" ? "reverse" : "normal";
+      setOrder(next);
+      renderPages();
+      setTimeout(restoreBookmarkScroll, 40);
+      toast(next === "reverse" ? "Reversed order" : "Normal order");
+    }
+
+    modeSel.addEventListener("change", () => setMode(modeSel.value));
+    tapToggle.addEventListener("click", () => setTapCycle(!getTapCycle()));
+    orderBtn.addEventListener("click", toggleOrder);
+    bottomBtn.addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" }));
+
+    // ===== Mobile menu sheet =====
+    function openSheet(){
+      sheetBack.style.display = "block";
+      sheet.style.display = "block";
+    }
+    function closeSheet(){
+      sheetBack.style.display = "none";
+      sheet.style.display = "none";
+    }
+    menuBtn?.addEventListener("click", openSheet);
+    sheetBack?.addEventListener("click", closeSheet);
+    sheetClose?.addEventListener("click", closeSheet);
+
+    // Menu actions
+    document.getElementById("mLike").addEventListener("click", () => { closeSheet(); doLikeToggle(); });
+    document.getElementById("mDislike").addEventListener("click", () => { closeSheet(); doDislikeToggle(); });
+    document.getElementById("mFav").addEventListener("click", () => { closeSheet(); doFavToggle(); });
+    document.getElementById("mMarks").addEventListener("click", () => { closeSheet(); window.location.href="bookmarks.html"; });
+    document.getElementById("mOrder").addEventListener("click", () => { closeSheet(); toggleOrder(); });
+    document.getElementById("mBottom").addEventListener("click", () => { closeSheet(); window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" }); });
+    document.getElementById("mTop").addEventListener("click", () => { closeSheet(); window.scrollTo({ top: 0, behavior:"smooth" }); });
+    document.getElementById("mBM").addEventListener("click", () => { closeSheet(); bookmarkCurrent(); });
+
+    window.addEventListener("scroll", () => {
+      toTopBtn.style.display = window.scrollY > 600 ? "block" : "none";
+    }, { passive:true });
+    toTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    bmPageBtn.addEventListener("click", () => { window.location.href = "bookmarks.html"; });
+
+    async function fetchComic() {
+      const res = await fetch(`${API}/api/comics/slug/${encodeURIComponent(slug)}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Comic not found");
+      return res.json();
+    }
+
+    async function trackViewOncePerSession() {
+      try {
+        const key = VIEWED_KEY_PREFIX + slug;
+        if (sessionStorage.getItem(key) === "1") return;
+        sessionStorage.setItem(key, "1");
+        await fetch(`${API}/api/comics/${encodeURIComponent(slug)}/view`, { method: "POST", credentials: "include" });
+      } catch {}
+    }
+
+    async function callLikeEndpoint(likeOn) {
+      const endpoint = likeOn ? "like" : "unlike";
+      const res = await fetch(`${API}/api/comics/${encodeURIComponent(slug)}/${endpoint}`, {
+        method: "POST", credentials: "include"
+      });
+      return res.ok;
+    }
+
+    function getBookmark() {
+      const raw = localStorage.getItem(BM_KEY_PREFIX + slug);
+      const n = Number(raw);
+      return Number.isFinite(n) && n >= 1 ? n : null;
+    }
+    function setBookmark(pageNum) {
+      localStorage.setItem(BM_KEY_PREFIX + slug, String(pageNum));
+    }
+
+
+    function renderChips() {
+      if (!chipsEl) return;
+      chipsEl.innerHTML = "";
+      const cat = String(comic?.category || "").trim();
+      const tags = Array.isArray(comic?.tags) ? comic.tags : (typeof comic?.tags === "string" ? comic.tags.split(",").map(s=>s.trim()) : []);
+      const cleanTags = tags.map(t => String(t).trim()).filter(Boolean);
+
+      if (cat) {
+        const c = document.createElement("div");
+        c.className = "chip accent";
+        c.innerHTML = `<strong>Category</strong>: ${escapeHtml(cat)}`;
+        chipsEl.appendChild(c);
+      }
+      for (const t of cleanTags.slice(0, 12)) {
+        const d = document.createElement("div");
+        d.className = "chip";
+        d.textContent = t;
+        chipsEl.appendChild(d);
+      }
+      if (!cat && !cleanTags.length) {
+        const d = document.createElement("div");
+        d.className = "chip";
+        d.textContent = "No tags";
+        chipsEl.appendChild(d);
+      }
+    }
+
+
+    function applyUI() {
+      const liked = getSet(LIKE_KEY).has(slug);
+      const disliked = getSet(DISLIKE_KEY).has(slug);
+      const fav = getSet(FAV_KEY).has(slug);
+
+      likeBtn.classList.toggle("active", liked);
+      dislikeBtn.classList.toggle("active", disliked);
+      favBtn.classList.toggle("active", fav);
+
+      const bm = getBookmark();
+      bmBtn.classList.toggle("active", !!bm);
+      bmMeta.textContent = bm ? `Bookmark: ${bm}` : "";
+
+      pageMeta.textContent = `Page ${currentPage} / ${pages.length}`;
+    }
+
+    async function doLikeToggle() {
+      const liked = getSet(LIKE_KEY);
+      const disliked = getSet(DISLIKE_KEY);
+      const isLiked = liked.has(slug);
+
+      if (isLiked) liked.delete(slug);
+      else liked.add(slug);
+
+      if (!isLiked) disliked.delete(slug);
+
+      setSet(LIKE_KEY, liked);
+      setSet(DISLIKE_KEY, disliked);
+      applyUI();
+
+      try {
+        const ok = await callLikeEndpoint(!isLiked);
+        if (!ok) toast("Like failed (server).");
+      } catch {
+        toast("Like failed (network).");
+      }
+    }
+
+    function doDislikeToggle() {
+      const disliked = getSet(DISLIKE_KEY);
+      const liked = getSet(LIKE_KEY);
+      const isDisliked = disliked.has(slug);
+
+      if (isDisliked) disliked.delete(slug);
+      else disliked.add(slug);
+
+      if (!isDisliked) liked.delete(slug);
+
+      setSet(DISLIKE_KEY, disliked);
+      setSet(LIKE_KEY, liked);
+      applyUI();
+    }
+
+    function doFavToggle() {
+      const fav = getSet(FAV_KEY);
+      if (fav.has(slug)) fav.delete(slug);
+      else fav.add(slug);
+      setSet(FAV_KEY, fav);
+      applyUI();
+    }
+
+    function bookmarkCurrent() {
+      setBookmark(currentPage);
+      applyUI();
+      toast(`Bookmarked page ${currentPage}`);
+    }
+
+    likeBtn.addEventListener("click", doLikeToggle);
+    dislikeBtn.addEventListener("click", doDislikeToggle);
+    favBtn.addEventListener("click", doFavToggle);
+    bmBtn.addEventListener("click", bookmarkCurrent);
+
+    // ===== Fullscreen =====
+    function fsRender() {
+      const order = getOrder();
+      const pageId = (order === "reverse")
+        ? pages[pages.length - fsPageNum]   // 1 -> last
+        : pages[fsPageNum - 1];
+
+      fsImg.src = `${comic.pageBaseUrl}${pageId}.jpg`;
+      fsPage.textContent = `Page ${fsPageNum} / ${pages.length}`;
+      currentPage = fsPageNum;
+      applyUI();
+    }
+
+    function openFullscreen(pageNum) {
+      fullscreenMode = true;
+      fsPageNum = Math.min(Math.max(1, pageNum), pages.length);
+      fsTitle.textContent = comic?.title || "Reader";
+      fsOverlay.classList.add("show");
+      document.body.style.overflow = "hidden";
+      fsTop.style.display = "flex";
+      fsRender();
+    }
+
+    function closeFullscreen() {
+      fullscreenMode = false;
+      fsOverlay.classList.remove("show");
+      document.body.style.overflow = "";
+      setBookmark(fsPageNum);
+      applyUI();
+      toast(`Saved bookmark: ${fsPageNum}`);
+    }
+
+    function fsPrev() { if (fsPageNum <= 1) return toast("First page"); fsPageNum -= 1; fsRender(); }
+    function fsNext() { if (fsPageNum >= pages.length) return toast("Last page"); fsPageNum += 1; fsRender(); }
+
+    fsClose.addEventListener("click", closeFullscreen);
+    fsLeft.addEventListener("click", fsPrev);
+    fsRight.addEventListener("click", fsNext);
+
+    document.getElementById("fsImgWrap").addEventListener("click", () => {
+      fsTop.style.display = (fsTop.style.display === "none") ? "flex" : "none";
+    });
+
+    fsBookmark.addEventListener("click", () => {
+      setBookmark(fsPageNum);
+      applyUI();
+      toast(`Bookmarked page ${fsPageNum}`);
+      fsTop.style.display = "flex";
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (!fullscreenMode) return;
+      if (e.key === "Escape") closeFullscreen();
+      if (e.key === "ArrowLeft") fsPrev();
+      if (e.key === "ArrowRight") fsNext();
+    });
+
+    // ===== Pages =====
+    function renderPages() {
+      pagesEl.innerHTML = "";
+
+      const order = getOrder();
+      const list = order === "reverse" ? [...pages].reverse() : [...pages];
+
+      for (let i = 0; i < list.length; i++) {
+        const pageId = list[i];
+        const pageNum = order === "reverse" ? (pages.length - i) : (i + 1);
+
+        const wrap = document.createElement("div");
+        wrap.className = "pageWrap";
+
+        const img = document.createElement("img");
+        img.className = "pageImg";
+        img.alt = `Page ${pageNum}`;
+        img.loading = "lazy";
+        img.src = `${comic.pageBaseUrl}${pageId}.jpg`;
+
+        img.addEventListener("click", (e) => {
+          // Clean behavior:
+          // - if Tap-cycle is ON => tap cycles mode, Shift-click opens fullscreen
+          // - if Tap-cycle is OFF => tap opens fullscreen
+          if (getTapCycle()) {
+            if (e.shiftKey) openFullscreen(pageNum);
+            else cycleMode();
+          } else {
+            openFullscreen(pageNum);
+          }
+        });
+
+        const badge = document.createElement("div");
+        badge.className = "pageBadge";
+        badge.textContent = `Page ${pageNum}`;
+
+        wrap.appendChild(img);
+        wrap.appendChild(badge);
+        pagesEl.appendChild(wrap);
+      }
+
+      // current page tracking
+      const wraps = Array.from(pagesEl.querySelectorAll(".pageWrap"));
+      const obs = new IntersectionObserver((entries) => {
+        let best = null;
+        for (const en of entries) {
+          if (!en.isIntersecting) continue;
+          if (!best || en.intersectionRatio > best.intersectionRatio) best = en;
+        }
+        if (!best) return;
+        const idx = wraps.indexOf(best.target);
+        if (idx >= 0) {
+          currentPage = (getOrder() === "reverse") ? (pages.length - idx) : (idx + 1);
+          applyUI();
+        }
+      }, { threshold: [0.15, 0.35, 0.55, 0.75, 0.92] });
+
+      wraps.forEach(w => obs.observe(w));
+    }
+
+    function restoreBookmarkScroll() {
+      const bm = getBookmark();
+      if (!bm) return;
+
+      const order = getOrder();
+      const wraps = Array.from(pagesEl.querySelectorAll(".pageWrap"));
+
+      // If reversed, bookmark page N is still "logical page N", map it to DOM index:
+      const idx = (order === "reverse") ? (pages.length - bm) : (bm - 1);
+      const target = wraps[idx];
+      if (!target) return;
+
+      target.scrollIntoView({ behavior: "auto", block: "start" });
+      currentPage = bm;
+      applyUI();
+      toast(`Resumed at page ${bm}`);
+    }
+
+    async function init() {
+      if (!slug) {
+        titleLine.textContent = "Missing slug";
+        authorLine.textContent = "";
+        return;
+      }
+
+      // prefs
+      setMode(getMode());
+      setOrder(getOrder());
+      setTapCycle(getTapCycle());
+      orderLabel.textContent = getOrder() === "reverse" ? "Reversed" : "Normal";
+
+      try {
+        comic = await fetchComic();
+        pages = Array.isArray(comic.pages) ? comic.pages : [];
+
+        document.title = `${comic.title || "Reader"} — Reader`;
+        titleLine.textContent = comic.title || "Untitled";
+        authorLine.textContent = comic.author?.displayName ? `by ${comic.author.displayName}` : "";
+        renderChips();
+
+        renderPages();
+        applyUI();
+
+        trackViewOncePerSession();
+        setTimeout(restoreBookmarkScroll, 60);
+      } catch (e) {
+        console.error(e);
+        titleLine.textContent = "Failed to load comic";
+        authorLine.textContent = "";
+        toast("Backend error (check API).");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

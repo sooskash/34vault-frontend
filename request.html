@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Request</title>
+  <style>
+    :root{
+      --bg:#0f1013; --panel:#171823; --panel2:#1e2030;
+      --text:#f2f2f2; --muted:#a9abb7; --accent:#e11d48;
+      --navh:64px; --toph:56px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);
+      padding-bottom:calc(var(--navh) + 12px);
+    }
+    a{color:inherit;text-decoration:none}
+
+    .topbar{
+      position:sticky;top:0;z-index:50;height:var(--toph);
+      display:flex;align-items:center;gap:10px;padding:10px 12px;
+      background:#0b0c10;border-bottom:1px solid #222;
+    }
+    .brand{font-weight:800;letter-spacing:.3px;white-space:nowrap;flex:0 0 auto;}
+    .spacer{flex:1}
+    .iconbtn{
+      width:38px;height:38px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--panel);border:1px solid #2a2b35;cursor:pointer;user-select:none;
+      flex:0 0 auto;
+    }
+
+    .section{padding:12px;}
+    @media (min-width:900px){
+      body{padding-bottom:12px;}
+      .bottomnav{display:none;}
+      .section{max-width:800px;margin:0 auto;}
+      .topbar{max-width:800px;margin:0 auto;}
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid #2a2b35;
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:12px;
+    }
+    .title{font-weight:900;font-size:16px;margin-bottom:4px;}
+    .sub{color:var(--muted);font-size:12px;font-weight:700;}
+
+    .label{color:var(--muted);font-size:12px;font-weight:800;margin:12px 0 6px;}
+    .input, .textarea{
+      width:100%;
+      border-radius:12px;border:1px solid #2a2b35;
+      background:#10111a;color:var(--text);
+      padding:10px 12px;outline:none;font-size:14px;
+    }
+    .input{height:44px;}
+    .textarea{min-height:110px;resize:vertical;}
+
+    .btnRow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+    .btn{
+      height:44px;padding:0 14px;border-radius:12px;border:1px solid #2a2b35;
+      background:var(--panel2);color:var(--text);cursor:pointer;font-weight:900;
+      user-select:none;
+    }
+    .btn.primary{border-color:rgba(225,29,72,.8);}
+    .btn:active{transform: translateY(1px);}
+
+    .msg{margin-top:10px;color:var(--muted);font-size:12px;font-weight:700;}
+    .msg.ok{color:#b3ffcf;}
+    .msg.error{color:#ffb4b4;}
+
+    .reqRow{
+      display:flex;gap:10px;align-items:flex-start;
+      border-top:1px solid #2a2b35;
+      padding-top:10px;margin-top:10px;
+    }
+    .dot{
+      width:34px;height:34px;border-radius:12px;
+      background:var(--panel2);border:1px solid #2a2b35;
+      display:flex;align-items:center;justify-content:center;
+      color:var(--muted);font-weight:900;
+      flex:0 0 auto;
+    }
+    .rTitle{font-weight:900;font-size:13px;}
+    .rBody{color:var(--muted);font-size:12px;font-weight:700;margin-top:4px;white-space:pre-wrap;}
+
+    .bottomnav{
+      position:fixed;left:0;right:0;bottom:0;z-index:60;height:var(--navh);
+      background:#0b0c10;border-top:1px solid #222;
+      display:flex;justify-content:space-around;align-items:center;padding:6px;
+    }
+    .navitem{width:25%;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;user-select:none;cursor:pointer;}
+    .navdot{width:30px;height:30px;border-radius:10px;background:var(--panel);border:1px solid #2a2b35;display:flex;align-items:center;justify-content:center;font-size:14px;}
+    .active{color:var(--accent);}
+    .active .navdot{border-color:var(--accent);}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="iconbtn" onclick="history.length>1?history.back():location.href='index.html'" title="Back">←</div>
+    <div class="brand">Request</div>
+    <div class="spacer"></div>
+    <div class="iconbtn" onclick="location.href='profile.html'" title="Profile">👤</div>
+  </div>
+
+  <div class="section">
+    <div class="card">
+      <div class="title">Request a Comic</div>
+      <div class="sub">This saves your request locally for now (we can wire it to an API later).</div>
+
+      <div class="label">Title / Idea</div>
+      <input id="title" class="input" placeholder="e.g., ‘Space pirates vs. kaiju’" />
+
+      <div class="label">Details</div>
+      <textarea id="details" class="textarea" placeholder="What do you want to see? Tone, genre, characters, etc."></textarea>
+
+      <div class="label">Optional: Your name</div>
+      <input id="name" class="input" placeholder="Anonymous" />
+
+      <div class="btnRow">
+        <button id="submit" class="btn primary" type="button">Submit</button>
+        <button id="clear" class="btn" type="button">Clear</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Recent Requests</div>
+      <div class="sub">Stored on this device only.</div>
+      <div id="list"></div>
+      <div id="empty" class="msg" style="display:none;">No requests yet.</div>
+
+      <div class="btnRow">
+        <button id="wipe" class="btn" type="button">Delete All</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottomnav">
+    <div class="navitem" onclick="location.href='index.html'">
+      <div class="navdot">🏠</div><div>Home</div>
+    </div>
+    <div class="navitem" onclick="location.href='authors.html'">
+      <div class="navdot">✏️</div><div>Authors</div>
+    </div>
+    <div class="navitem active">
+      <div class="navdot">➕</div><div>Request</div>
+    </div>
+    <div class="navitem" onclick="location.href='profile.html'">
+      <div class="navdot">👤</div><div>Me</div>
+    </div>
+  </div>
+
+  <script>
+    const KEY = "comicRequests";
+    const titleEl = document.getElementById("title");
+    const detailsEl = document.getElementById("details");
+    const nameEl = document.getElementById("name");
+    const msg = document.getElementById("msg");
+    const list = document.getElementById("list");
+    const empty = document.getElementById("empty");
+
+    function setMsg(text, kind) {
+      msg.className = "msg" + (kind ? (" " + kind) : "");
+      msg.textContent = text || "";
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY) || "[]";
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function save(arr) {
+      localStorage.setItem(KEY, JSON.stringify(arr));
+    }
+
+    function render() {
+      const arr = load();
+      list.innerHTML = "";
+      empty.style.display = arr.length ? "none" : "block";
+
+      arr.slice(0, 15).forEach((r, i) => {
+        const row = document.createElement("div");
+        row.className = "reqRow";
+        row.innerHTML = `
+          <div class="dot">${i + 1}</div>
+          <div>
+            <div class="rTitle">${escapeHtml(r.title || "Untitled")} <span style="color:#a9abb7;font-weight:800;">— ${escapeHtml(r.name || "Anonymous")}</span></div>
+            <div class="rBody">${escapeHtml(r.details || "")}</div>
+            <div class="sub" style="margin-top:6px;">${escapeHtml(new Date(r.createdAt).toLocaleString())}</div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    document.getElementById("submit").addEventListener("click", () => {
+      const title = String(titleEl.value || "").trim();
+      const details = String(detailsEl.value || "").trim();
+      const name = String(nameEl.value || "").trim() || "Anonymous";
+
+      if (!title || !details) {
+        setMsg("Title + Details are required.", "error");
+        return;
+      }
+
+      const arr = load();
+      arr.unshift({ title, details, name, createdAt: new Date().toISOString() });
+      save(arr);
+
+      titleEl.value = "";
+      detailsEl.value = "";
+      nameEl.value = "";
+
+      setMsg("Request saved.", "ok");
+      render();
+    });
+
+    document.getElementById("clear").addEventListener("click", () => {
+      titleEl.value = "";
+      detailsEl.value = "";
+      nameEl.value = "";
+      setMsg("", "");
+      titleEl.focus();
+    });
+
+    document.getElementById("wipe").addEventListener("click", () => {
+      if (!confirm("Delete all saved requests on this device?")) return;
+      save([]);
+      setMsg("Deleted.", "ok");
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

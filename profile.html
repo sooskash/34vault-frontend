@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Me</title>
+  <style>
+    :root{
+      --bg:#0f1013; --panel:#171823; --panel2:#1e2030;
+      --text:#f2f2f2; --muted:#a9abb7; --accent:#e11d48;
+      --navh:64px; --toph:56px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);
+      padding-bottom:calc(var(--navh) + 12px);
+    }
+    a{color:inherit;text-decoration:none}
+
+    .topbar{
+      position:sticky;top:0;z-index:50;height:var(--toph);
+      display:flex;align-items:center;gap:10px;padding:10px 12px;
+      background:#0b0c10;border-bottom:1px solid #222;
+    }
+    .brand{font-weight:800;letter-spacing:.3px;white-space:nowrap;flex:0 0 auto;}
+    .spacer{flex:1}
+    .iconbtn{
+      width:38px;height:38px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--panel);border:1px solid #2a2b35;cursor:pointer;user-select:none;
+      flex:0 0 auto;
+    }
+
+    .section{padding:12px;}
+    @media (min-width:900px){
+      body{padding-bottom:12px;}
+      .bottomnav{display:none;}
+      .section{max-width:800px;margin:0 auto;}
+      .topbar{max-width:800px;margin:0 auto;}
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid #2a2b35;
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:12px;
+    }
+    .row{display:flex;align-items:center;gap:12px;}
+    .avatar{
+      width:54px;height:54px;border-radius:18px;
+      background:var(--panel2);border:1px solid #2a2b35;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;color:var(--muted);
+      flex:0 0 auto;
+    }
+    .name{font-weight:900;font-size:16px;line-height:1.2;}
+    .sub{color:var(--muted);font-size:12px;font-weight:700;margin-top:4px;}
+
+    .pillRow{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;}
+    .pill{
+      height:26px;padding:0 10px;border-radius:999px;
+      background:var(--panel2);border:1px solid #2a2b35;
+      color:var(--muted);font-size:12px;font-weight:900;
+      display:inline-flex;align-items:center;gap:6px;
+      white-space:nowrap;
+    }
+    .pill.plus{border-color:rgba(225,29,72,.65); color:var(--text);}
+
+    .label{color:var(--muted);font-size:12px;font-weight:800;margin:10px 0 6px;}
+    .input{
+      width:100%;height:44px;border-radius:12px;border:1px solid #2a2b35;
+      background:#10111a;color:var(--text);padding:0 12px;outline:none;font-size:14px;
+    }
+    .btnRow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+    .btn{
+      height:44px;padding:0 14px;border-radius:12px;border:1px solid #2a2b35;
+      background:var(--panel2);color:var(--text);cursor:pointer;font-weight:900;
+      user-select:none;
+    }
+    .btn.primary{border-color:rgba(225,29,72,.8);}
+    .btn:active{transform: translateY(1px);}
+
+    .msg{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:700;
+      white-space:pre-wrap;
+    }
+    .msg.error{color:#ffb4b4;}
+    .msg.ok{color:#b3ffcf;}
+
+    .bottomnav{
+      position:fixed;left:0;right:0;bottom:0;z-index:60;height:var(--navh);
+      background:#0b0c10;border-top:1px solid #222;
+      display:flex;justify-content:space-around;align-items:center;padding:6px;
+    }
+    .navitem{width:20%;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;user-select:none;cursor:pointer;}
+    .navdot{width:30px;height:30px;border-radius:10px;background:var(--panel);border:1px solid #2a2b35;display:flex;align-items:center;justify-content:center;font-size:14px;}
+    .active{color:var(--accent);}
+    .active .navdot{border-color:var(--accent);}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="brand">Me</div>
+    <div class="spacer"></div>
+    <div class="iconbtn" onclick="location.href='index.html'" title="Home">🏠</div>
+  </div>
+
+  <div class="section">
+    <!-- Logged-in card -->
+    <div id="meCard" class="card" style="display:none;">
+      <div class="row">
+        <div class="avatar" id="avatar">?</div>
+        <div>
+          <div class="name" id="displayName">—</div>
+          <div class="sub" id="email">—</div>
+        </div>
+      </div>
+
+      <div class="pillRow" id="pills"></div>
+
+      <div class="btnRow">
+        <!-- Upload button is role-gated -->
+        <button class="btn" id="uploadBtn" type="button" style="display:none;" onclick="location.href='upload.html'">Upload</button>
+
+        <button class="btn" type="button" onclick="location.href='authors.html'">Authors</button>
+        <button class="btn" type="button" onclick="location.href='request.html'">Request</button>
+        <button class="btn primary" id="logoutBtn" type="button">Logout</button>
+      </div>
+
+      <div id="meMsg" class="msg"></div>
+    </div>
+
+    <!-- Login card -->
+    <div id="loginCard" class="card" style="display:none;">
+      <div class="name">Login</div>
+      <div class="sub">Use your account email + password.</div>
+
+      <div class="label">Email</div>
+      <input id="loginEmail" class="input" type="email" autocomplete="email" placeholder="you@example.com" />
+
+      <div class="label">Password</div>
+      <input id="loginPass" class="input" type="password" autocomplete="current-password" placeholder="••••••••" />
+
+      <div class="btnRow">
+        <button class="btn primary" id="loginBtn" type="button">Login</button>
+        <button class="btn" type="button" onclick="location.href='index.html'">Back to Home</button>
+      </div>
+
+      <div id="loginMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="bottomnav">
+    <div class="navitem" onclick="location.href='index.html'">
+      <div class="navdot">🏠</div><div>Home</div>
+    </div>
+    <div class="navitem" onclick="location.href='authors.html'">
+      <div class="navdot">✏️</div><div>Authors</div>
+    </div>
+    <div class="navitem" onclick="location.href='request.html'">
+      <div class="navdot">➕</div><div>Request</div>
+    </div>
+
+    <!-- Upload tab is role-gated -->
+    <div class="navitem" id="uploadNav" style="display:none;" onclick="location.href='upload.html'">
+      <div class="navdot">⬆️</div><div>Upload</div>
+    </div>
+
+    <div class="navitem active">
+      <div class="navdot">👤</div><div>Me</div>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:3001";
+
+    const meCard = document.getElementById("meCard");
+    const loginCard = document.getElementById("loginCard");
+
+    const avatar = document.getElementById("avatar");
+    const displayName = document.getElementById("displayName");
+    const emailEl = document.getElementById("email");
+    const pills = document.getElementById("pills");
+
+    const meMsg = document.getElementById("meMsg");
+    const loginMsg = document.getElementById("loginMsg");
+
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPass = document.getElementById("loginPass");
+
+    const uploadBtn = document.getElementById("uploadBtn");
+    const uploadNav = document.getElementById("uploadNav");
+
+    function setMsg(el, text, kind) {
+      el.className = "msg" + (kind ? (" " + kind) : "");
+      el.textContent = text || "";
+    }
+
+    function makePill(text, plus=false) {
+      const d = document.createElement("div");
+      d.className = "pill" + (plus ? " plus" : "");
+      d.textContent = text;
+      return d;
+    }
+
+    function canUpload(role) {
+      const r = String(role || "USER").toUpperCase();
+      return ["OWNER","ADMIN","AUTHOR"].includes(r);
+    }
+
+    function renderMe(user) {
+      const dn = user.displayName || user.email || "Me";
+      document.title = `${dn} — Me`;
+      avatar.textContent = dn.trim().charAt(0).toUpperCase();
+      displayName.textContent = dn;
+      emailEl.textContent = user.email || "—";
+
+      const role = String(user.role || "USER").toUpperCase();
+
+      pills.innerHTML = "";
+      pills.appendChild(makePill(role));
+      if (user.isPlus) pills.appendChild(makePill("PLUS", true));
+      if (user.userNumber != null) pills.appendChild(makePill(`#${user.userNumber}`));
+
+      const showUpload = canUpload(role);
+      uploadBtn.style.display = showUpload ? "inline-flex" : "none";
+      uploadNav.style.display = showUpload ? "flex" : "none";
+
+      meCard.style.display = "block";
+      loginCard.style.display = "none";
+    }
+
+    async function loadMe() {
+      try {
+        const res = await fetch(`${API}/api/me`, { credentials: "include" });
+        if (res.status === 401) {
+          meCard.style.display = "none";
+          loginCard.style.display = "block";
+          uploadBtn.style.display = "none";
+          uploadNav.style.display = "none";
+          setMsg(loginMsg, "Not logged in.", "");
+          return;
+        }
+        if (!res.ok) throw new Error("Failed to load /api/me");
+        const user = await res.json();
+        renderMe(user);
+        setMsg(meMsg, "", "");
+      } catch (e) {
+        console.error(e);
+        meCard.style.display = "none";
+        loginCard.style.display = "block";
+        uploadBtn.style.display = "none";
+        uploadNav.style.display = "none";
+        setMsg(loginMsg, "Backend error. Make sure http://localhost:3001 is running.", "error");
+      }
+    }
+
+    async function login() {
+      const email = String(loginEmail.value || "").trim();
+      const password = String(loginPass.value || "");
+
+      if (!email || !password) {
+        setMsg(loginMsg, "Email + password required.", "error");
+        return;
+      }
+
+      setMsg(loginMsg, "Logging in…", "");
+      try {
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!res.ok) {
+          let msg = "Login failed.";
+          try {
+            const data = await res.json();
+            if (data && data.error) msg = data.error;
+          } catch {}
+          setMsg(loginMsg, msg, "error");
+          return;
+        }
+
+        setMsg(loginMsg, "Logged in.", "ok");
+        await loadMe();
+      } catch (e) {
+        console.error(e);
+        setMsg(loginMsg, "Network error while logging in.", "error");
+      }
+    }
+
+    async function logout() {
+      setMsg(meMsg, "Logging out…", "");
+      try {
+        await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
+      } catch {}
+      await loadMe();
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", login);
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    loginPass.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+    loginEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+
+    loadMe();
+  </script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Authors</title>
+  <style>
+    :root{
+      --bg:#0f1013; --panel:#171823; --panel2:#1e2030;
+      --text:#f2f2f2; --muted:#a9abb7; --accent:#e11d48;
+      --navh:64px; --toph:56px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);
+      padding-bottom:calc(var(--navh) + 12px);
+    }
+    a{color:inherit;text-decoration:none}
+
+    .topbar{
+      position:sticky;top:0;z-index:50;height:var(--toph);
+      display:flex;align-items:center;gap:10px;padding:10px 12px;
+      background:#0b0c10;border-bottom:1px solid #222;
+    }
+    .brand{font-weight:800;letter-spacing:.3px;white-space:nowrap;flex:0 0 auto;}
+    .spacer{flex:1}
+    .iconbtn{
+      width:38px;height:38px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--panel);border:1px solid #2a2b35;cursor:pointer;user-select:none;
+      flex:0 0 auto;
+    }
+
+    .section{padding:12px;}
+    @media (min-width:900px){
+      body{padding-bottom:12px;}
+      .bottomnav{display:none;}
+      .section{max-width:1100px;margin:0 auto;}
+      .topbar{max-width:1100px;margin:0 auto;}
+    }
+
+    .searchRow{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+    .searchInput{
+      flex:1;height:44px;border-radius:12px;border:1px solid #2a2b35;
+      background:#10111a;color:var(--text);padding:0 12px;outline:none;font-size:14px;
+    }
+    .select{
+      height:44px;border-radius:12px;border:1px solid #2a2b35;
+      background:#10111a;color:var(--text);padding:0 10px;outline:none;font-size:13px;
+      max-width:100%;
+      white-space:nowrap;
+    }
+    .clearBtn{
+      height:44px;padding:0 14px;border-radius:12px;border:1px solid #2a2b35;
+      background:var(--panel2);color:var(--text);cursor:pointer;font-weight:800;
+      white-space:nowrap;
+    }
+
+    .list{display:flex;flex-direction:column;gap:10px;}
+    .row{
+      background:var(--panel);
+      border:1px solid #2a2b35;
+      border-radius:14px;
+      padding:12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .row:hover{border-color:#3a3c4a;}
+    .avatar{
+      width:44px;height:44px;border-radius:14px;
+      background:var(--panel2);
+      border:1px solid #2a2b35;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;color:var(--muted);
+      flex:0 0 auto;
+    }
+    .name{font-weight:900;font-size:14px;line-height:1.2;}
+    .sub{color:var(--muted);font-size:12px;font-weight:700;margin-top:3px;}
+    .right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+    .pill{
+      height:26px;padding:0 10px;border-radius:999px;
+      background:var(--panel2);border:1px solid #2a2b35;
+      color:var(--muted);font-size:12px;font-weight:900;
+      display:inline-flex;align-items:center;gap:6px;
+      white-space:nowrap;
+    }
+    .pill.plus{border-color:rgba(225,29,72,.65); color:var(--text);}
+    .arrow{color:var(--muted);font-weight:900}
+
+    .loading, .empty{
+      margin-top:10px;padding:14px;background:var(--panel);
+      border:1px solid #2a2b35;border-radius:12px;color:var(--muted);
+      text-align:center;
+    }
+    .empty{display:none;}
+
+    .bottomnav{
+      position:fixed;left:0;right:0;bottom:0;z-index:60;height:var(--navh);
+      background:#0b0c10;border-top:1px solid #222;
+      display:flex;justify-content:space-around;align-items:center;padding:6px;
+    }
+    .navitem{width:25%;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;user-select:none;cursor:pointer;}
+    .navdot{width:30px;height:30px;border-radius:10px;background:var(--panel);border:1px solid #2a2b35;display:flex;align-items:center;justify-content:center;font-size:14px;}
+    .active{color:var(--accent);}
+    .active .navdot{border-color:var(--accent);}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="brand">Authors</div>
+    <div class="spacer"></div>
+    <div class="iconbtn" onclick="location.href='profile.html'" title="Profile">👤</div>
+  </div>
+
+  <div class="section">
+    <div class="searchRow">
+      <input id="q" class="searchInput" placeholder="Search authors…" autocomplete="off" />
+      <select id="sort" class="select" title="Sort">
+        <option value="name">Sort: Name</option>
+        <option value="role">Sort: Role</option>
+        <option value="number">Sort: User #</option>
+        <option value="plus">Sort: Plus first</option>
+      </select>
+      <button id="clear" class="clearBtn" type="button">Clear</button>
+    </div>
+
+    <div id="loading" class="loading">Loading authors...</div>
+    <div id="list" class="list"></div>
+    <div id="empty" class="empty">No authors found.</div>
+  </div>
+
+  <div class="bottomnav">
+    <div class="navitem" onclick="location.href='index.html'">
+      <div class="navdot">🏠</div><div>Home</div>
+    </div>
+    <div class="navitem active">
+      <div class="navdot">✏️</div><div>Authors</div>
+    </div>
+    <div class="navitem" onclick="location.href='request.html'">
+      <div class="navdot">➕</div><div>Request</div>
+    </div>
+    <div class="navitem" onclick="location.href='profile.html'">
+      <div class="navdot">👤</div><div>Me</div>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:3001";
+    const q = document.getElementById("q");
+    const sortSel = document.getElementById("sort");
+    const listEl = document.getElementById("list");
+    const loadingEl = document.getElementById("loading");
+    const emptyEl = document.getElementById("empty");
+
+    let allAuthors = [];
+    let filtered = [];
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function roleRank(role) {
+      const r = String(role || "").toUpperCase();
+      if (r === "OWNER") return 4;
+      if (r === "ADMIN") return 3;
+      if (r === "AUTHOR") return 2;
+      return 1;
+    }
+
+    function applyFilters() {
+      const term = String(q.value || "").trim().toLowerCase();
+      filtered = allAuthors.filter(a => {
+        if (!term) return true;
+        const hay = [
+          String(a.displayName || ""),
+          String(a.role || ""),
+          String(a.userNumber || "")
+        ].join(" ").toLowerCase();
+        return hay.includes(term);
+      });
+
+      const mode = sortSel.value;
+      filtered.sort((a,b) => {
+        if (mode === "role") {
+          const d = roleRank(b.role) - roleRank(a.role);
+          if (d) return d;
+          return String(a.displayName||"").localeCompare(String(b.displayName||""));
+        }
+        if (mode === "number") {
+          return Number(a.userNumber||0) - Number(b.userNumber||0);
+        }
+        if (mode === "plus") {
+          const d = (b.isPlus ? 1 : 0) - (a.isPlus ? 1 : 0);
+          if (d) return d;
+          return String(a.displayName||"").localeCompare(String(b.displayName||""));
+        }
+        return String(a.displayName||"").localeCompare(String(b.displayName||""));
+      });
+
+      render();
+    }
+
+    function render() {
+      listEl.innerHTML = "";
+      emptyEl.style.display = filtered.length ? "none" : "block";
+      if (!filtered.length) return;
+
+      for (const a of filtered) {
+        const initial = (a.displayName || "A").trim().charAt(0).toUpperCase();
+        const role = String(a.role || "AUTHOR").toUpperCase();
+        const num = a.userNumber != null ? `#${a.userNumber}` : "";
+
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `
+          <div class="avatar">${escapeHtml(initial)}</div>
+          <div>
+            <div class="name">${escapeHtml(a.displayName || "Unknown")}</div>
+            <div class="sub">${escapeHtml(role)} ${escapeHtml(num)}</div>
+          </div>
+          <div class="right">
+            ${a.isPlus ? `<div class="pill plus">PLUS</div>` : ``}
+            <div class="pill">${escapeHtml(role)}</div>
+            <div class="arrow">›</div>
+          </div>
+        `;
+        row.addEventListener("click", () => {
+          location.href = `author.html?id=${encodeURIComponent(a.id)}`;
+        });
+        listEl.appendChild(row);
+      }
+    }
+
+    async function loadAuthors() {
+      try {
+        loadingEl.style.display = "block";
+        emptyEl.style.display = "none";
+        const res = await fetch(`${API}/api/authors`);
+        if (!res.ok) throw new Error("Failed to load authors");
+        allAuthors = await res.json();
+        loadingEl.style.display = "none";
+        applyFilters();
+      } catch (e) {
+        console.error(e);
+        loadingEl.style.display = "none";
+        emptyEl.style.display = "block";
+        emptyEl.textContent = "Failed to load authors. Make sure backend is running on http://localhost:3001";
+      }
+    }
+
+    q.addEventListener("input", applyFilters);
+    sortSel.addEventListener("change", applyFilters);
+    document.getElementById("clear").addEventListener("click", () => {
+      q.value = "";
+      sortSel.value = "name";
+      applyFilters();
+      q.focus();
+    });
+
+    loadAuthors();
+  </script>
+</body>
+</html>

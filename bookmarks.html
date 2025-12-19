@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bookmarks</title>
+  <style>
+    :root{
+      --bg:#0f1013; --panel:#171823; --panel2:#1e2030;
+      --text:#f2f2f2; --muted:#a9abb7; --accent:#e11d48;
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); }
+    .wrap{max-width:980px;margin:0 auto;padding:18px 12px 40px;}
+    .top{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:14px;
+    }
+    .title{font-size:22px;font-weight:900}
+    .btn{
+      border:1px solid #2a2b35;
+      background:var(--panel2);
+      color:var(--text);
+      height:40px;
+      padding:0 14px;
+      border-radius:14px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .muted{color:var(--muted);font-weight:800}
+    .grid{display:grid; gap:12px;}
+    .card{
+      background:rgba(11,12,16,.92);
+      border:1px solid #222;
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      padding:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .left{min-width:0; flex:1;}
+    .name{
+      font-weight:900;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .meta{margin-top:4px; font-size:12px; font-weight:800; color:var(--muted);}
+    .actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+    .pill{
+      height:34px;
+      padding:0 12px;
+      border-radius:999px;
+      border:1px solid #2a2b35;
+      background:var(--panel);
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+    }
+    .pill.danger{
+      border-color: rgba(225,29,72,.55);
+      color:#fff;
+    }
+    .empty{
+      margin-top:18px;
+      background:rgba(11,12,16,.92);
+      border:1px solid #222;
+      border-radius:16px;
+      padding:14px;
+      color:var(--muted);
+      font-weight:800;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="title">Bookmarks</div>
+        <div class="muted">Saved per device (localStorage) for now.</div>
+      </div>
+      <button class="btn" onclick="location.href='index.html'">Back to Home</button>
+    </div>
+
+    <div id="list" class="grid"></div>
+    <div id="empty" class="empty" style="display:none;">
+      No bookmarks yet. Open a comic and press <b>BM Mark</b>.
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:3001";
+    const BM_PREFIX = "bookmark:";
+
+    function getBookmarks() {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith(BM_PREFIX)) continue;
+        const slug = k.slice(BM_PREFIX.length);
+        const page = Number(localStorage.getItem(k));
+        if (!slug || !Number.isFinite(page) || page < 1) continue;
+        out.push({ slug, page });
+      }
+      // newest-ish first: bigger page first, then slug
+      out.sort((a,b) => (b.page - a.page) || a.slug.localeCompare(b.slug));
+      return out;
+    }
+
+    async function fetchComicTitle(slug) {
+      try {
+        const r = await fetch(`${API}/api/comics/slug/${encodeURIComponent(slug)}`, { credentials:"include" });
+        if (!r.ok) return null;
+        const c = await r.json();
+        return {
+          title: c.title || slug,
+          author: c.author?.displayName || ""
+        };
+      } catch {
+        return null;
+      }
+    }
+
+    function removeBookmark(slug) {
+      localStorage.removeItem(BM_PREFIX + slug);
+      render();
+    }
+
+    function openReader(slug) {
+      location.href = `reader.html?slug=${encodeURIComponent(slug)}`;
+    }
+
+    async function render() {
+      const list = document.getElementById("list");
+      const empty = document.getElementById("empty");
+      list.innerHTML = "";
+
+      const bms = getBookmarks();
+      if (!bms.length) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      for (const bm of bms) {
+        const info = await fetchComicTitle(bm.slug);
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const left = document.createElement("div");
+        left.className = "left";
+
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = info?.title || bm.slug;
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = `Page ${bm.page}` + (info?.author ? ` • by ${info.author}` : "");
+
+        left.appendChild(name);
+        left.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const cont = document.createElement("div");
+        cont.className = "pill";
+        cont.textContent = "Continue";
+        cont.onclick = () => openReader(bm.slug);
+
+        const remove = document.createElement("div");
+        remove.className = "pill danger";
+        remove.textContent = "Remove";
+        remove.onclick = () => removeBookmark(bm.slug);
+
+        actions.appendChild(cont);
+        actions.appendChild(remove);
+
+        card.appendChild(left);
+        card.appendChild(actions);
+
+        list.appendChild(card);
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>

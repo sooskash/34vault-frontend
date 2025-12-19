@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Comic Site</title>
+  <style>
+    :root{
+      --bg:#0f1013; --panel:#171823; --panel2:#1e2030;
+      --text:#f2f2f2; --muted:#a9abb7; --accent:#e11d48;
+      --navh:64px; --toph:56px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);
+      padding-bottom:calc(var(--navh) + 12px);
+    }
+    a{color:inherit;text-decoration:none}
+
+    .topbar{
+      position:sticky;top:0;z-index:50;height:var(--toph);
+      display:flex;align-items:center;gap:10px;padding:10px 12px;
+      background:#0b0c10;border-bottom:1px solid #222;
+    }
+    .brand{font-weight:700;letter-spacing:.3px;white-space:nowrap;flex:0 0 auto;}
+    .spacer{flex:1}
+    .iconbtn{
+      width:38px;height:38px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--panel);border:1px solid #2a2b35;cursor:pointer;user-select:none;
+      flex:0 0 auto;
+    }
+
+    .section{padding:12px;}
+    @media (min-width:900px){
+      body{padding-bottom:12px;}
+      .bottomnav{display:none;}
+      .section{max-width:1200px;margin:0 auto;}
+      .topbar{max-width:1200px;margin:0 auto;}
+    }
+
+    .searchRow{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+    .searchInput{
+      flex:1;height:44px;border-radius:12px;border:1px solid #2a2b35;
+      background:#10111a;color:var(--text);padding:0 12px;outline:none;font-size:14px;
+    }
+    .clearBtn{
+      height:44px;padding:0 14px;border-radius:12px;border:1px solid #2a2b35;
+      background:var(--panel2);color:var(--text);cursor:pointer;font-weight:700;
+      white-space:nowrap;
+    }
+
+    .filtersRow{
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .select{
+      height:40px;border-radius:12px;border:1px solid #2a2b35;
+      background:#10111a;color:var(--text);padding:0 10px;outline:none;font-size:13px;
+      max-width:100%;
+    }
+    .toggleBtn{
+      height:40px;padding:0 12px;border-radius:12px;border:1px solid #2a2b35;
+      background:var(--panel2);color:var(--text);cursor:pointer;font-weight:800;
+      display:flex;align-items:center;gap:8px;user-select:none;
+      white-space:nowrap;
+    }
+    .toggleBtn.on{border-color:var(--accent); color:var(--text);}
+    .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:22px;height:22px;padding:0 7px;border-radius:999px;
+      background:var(--panel);border:1px solid #2a2b35;color:var(--muted);font-size:12px;font-weight:800;
+    }
+    .toggleBtn.on .badge{border-color:var(--accent); color:var(--text);}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media(min-width:900px){ .grid{grid-template-columns:repeat(5, 1fr);} }
+
+    .card{
+      background:var(--panel);border:1px solid #2a2b35;border-radius:14px;overflow:hidden;
+      position:relative;
+    }
+    .cover{width:100%;height:190px;object-fit:cover;display:block;background:#333;}
+    @media(min-width:900px){ .cover{height:240px;} }
+    .cardbody{padding:10px;}
+    .ctitle{
+      font-size:14px;font-weight:800;line-height:1.2;margin-bottom:4px;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .auth{color:var(--muted);font-size:12px;margin-bottom:8px;}
+    .openbtn{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a2b35;
+      background:var(--panel2);color:var(--text);cursor:pointer;font-weight:700;
+    }
+    .openbtn:hover{border-color:var(--accent);}
+
+    .favBtn{
+      position:absolute;top:10px;right:10px;
+      width:36px;height:36px;border-radius:12px;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;user-select:none;
+      backdrop-filter: blur(6px);
+    }
+    .favBtn.on{border-color: rgba(225,29,72,.9);}
+    .favBtn span{font-size:18px;line-height:1;}
+
+    .bottomnav{
+      position:fixed;left:0;right:0;bottom:0;z-index:60;height:var(--navh);
+      background:#0b0c10;border-top:1px solid #222;
+      display:flex;justify-content:space-around;align-items:center;padding:6px;
+    }
+    .navitem{width:25%;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;user-select:none;cursor:pointer;}
+    .navdot{width:30px;height:30px;border-radius:10px;background:var(--panel);border:1px solid #2a2b35;display:flex;align-items:center;justify-content:center;font-size:14px;}
+    .active{color:var(--accent);}
+    .active .navdot{border-color:var(--accent);}
+
+    .empty{
+      margin-top:10px;padding:14px;background:var(--panel);
+      border:1px solid #2a2b35;border-radius:12px;color:var(--muted);
+      display:none;
+    }
+
+    .loading{
+      margin-top:10px;padding:14px;background:var(--panel);
+      border:1px solid #2a2b35;border-radius:12px;color:var(--muted);
+      text-align:center;
+    }
+
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:-4px;
+      margin-bottom:10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="brand">Comics</div>
+    <div class="spacer"></div>
+    <div class="iconbtn" onclick="location.href='profile.html'" title="Profile">👤</div>
+  </div>
+
+  <div class="section">
+    <div class="searchRow">
+      <input id="q" class="searchInput" placeholder="Search comics…" autocomplete="off" />
+      <button id="clear" class="clearBtn" type="button">Clear</button>
+    </div>
+
+    <div class="filtersRow">
+      <select id="category" class="select" title="Category">
+        <option value="">All categories</option>
+      </select>
+
+      <select id="tag" class="select" title="Tag">
+        <option value="">All tags</option>
+      </select>
+
+      <button id="favOnly" class="toggleBtn" type="button" title="Show favorites only">
+        ⭐ Favorites
+        <span id="favCount" class="badge">0</span>
+      </button>
+    </div>
+
+    <div class="hint" id="hint"></div>
+
+    <div id="loading" class="loading">Loading comics...</div>
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty">No comics found.</div>
+  </div>
+
+  <div class="bottomnav" id="bottomnav">
+    <div class="navitem active">
+      <div class="navdot">🏠</div><div>Home</div>
+    </div>
+    <div class="navitem" onclick="location.href='authors.html'">
+      <div class="navdot">✏️</div><div>Authors</div>
+    </div>
+
+    <!-- Upload (hidden unless OWNER/ADMIN/AUTHOR) -->
+    <div class="navitem" id="uploadNav" style="display:none;" onclick="location.href='upload.html'">
+      <div class="navdot">⬆️</div><div>Upload</div>
+    </div>
+
+    <div class="navitem" onclick="location.href='request.html'">
+      <div class="navdot">➕</div><div>Request</div>
+    </div>
+    <div class="navitem" onclick="location.href='profile.html'">
+      <div class="navdot">👤</div><div>Me</div>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:3001";
+
+    let allComics = [];
+    let filteredComics = [];
+
+    const grid = document.getElementById("grid");
+    const empty = document.getElementById("empty");
+    const loading = document.getElementById("loading");
+    const hint = document.getElementById("hint");
+
+    const q = document.getElementById("q");
+    const categorySel = document.getElementById("category");
+    const tagSel = document.getElementById("tag");
+    const favOnlyBtn = document.getElementById("favOnly");
+    const favCountBadge = document.getElementById("favCount");
+    const uploadNav = document.getElementById("uploadNav");
+
+    // ---------------------------
+    // Favorites (localStorage)
+    // ---------------------------
+    const FAV_KEY = "favoriteSlugs";
+    function getFavSet() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
+        return new Set(Array.isArray(arr) ? arr : []);
+      } catch {
+        return new Set();
+      }
+    }
+    function setFavSet(set) {
+      localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(set)));
+      updateFavCount();
+    }
+    function updateFavCount() {
+      const favs = getFavSet();
+      favCountBadge.textContent = String(favs.size);
+    }
+
+    // Persist “favorites only” toggle
+    const FAV_ONLY_KEY = "favOnly";
+    function getFavOnly() {
+      return localStorage.getItem(FAV_ONLY_KEY) === "1";
+    }
+    function setFavOnly(v) {
+      localStorage.setItem(FAV_ONLY_KEY, v ? "1" : "0");
+      applyFavOnlyUI();
+    }
+    function applyFavOnlyUI() {
+      const on = getFavOnly();
+      favOnlyBtn.classList.toggle("on", on);
+    }
+
+    // ---------------------------
+    // Show Upload nav if privileged
+    // ---------------------------
+
+let canEdit = false;
+
+async function initEditPermission() {
+  try {
+    const res = await fetch(`${API}/api/me`, { credentials: "include" });
+    if (!res.ok) return;
+    const me = await res.json();
+    const role = String(me.role || "USER").toUpperCase();
+    canEdit = ["OWNER","ADMIN","AUTHOR"].includes(role);
+  } catch {}
+}
+
+    async function initUploadNav() {
+      try {
+        const res = await fetch(`${API}/api/me`, { credentials: "include" });
+        if (!res.ok) return; // not logged in, or backend down
+        const me = await res.json();
+        const role = String(me.role || "USER").toUpperCase();
+        const canUpload = ["OWNER","ADMIN","AUTHOR"].includes(role);
+        if (canUpload) uploadNav.style.display = "flex";
+      } catch {
+        // ignore
+      }
+    }
+
+    // ---------------------------
+    // Load comics
+    // ---------------------------
+    async function loadComics() {
+      try {
+        loading.style.display = "block";
+        empty.style.display = "none";
+        hint.textContent = "";
+
+        const res = await fetch(`${API}/api/comics`);
+        if (!res.ok) throw new Error("Failed to load comics");
+
+        allComics = await res.json();
+
+        buildFilterOptions(allComics);
+        loading.style.display = "none";
+
+        restoreFilterState();
+        applyFilters();
+      } catch (err) {
+        console.error("Load failed:", err);
+        loading.style.display = "none";
+        empty.style.display = "block";
+        empty.textContent = "Failed to load comics. Make sure the backend is running on http://localhost:3001";
+      }
+    }
+
+    function safeLower(s) {
+      return String(s || "").toLowerCase();
+    }
+
+    function normalizeTags(tags) {
+      if (!tags) return [];
+      if (Array.isArray(tags)) return tags.map(t => String(t).trim()).filter(Boolean);
+      if (typeof tags === "string") return tags.split(",").map(t => t.trim()).filter(Boolean);
+      return [];
+    }
+
+    function buildFilterOptions(comics) {
+      const categories = new Set();
+      const tags = new Set();
+
+      for (const c of comics) {
+        const cat = String(c.category || "").trim();
+        if (cat) categories.add(cat);
+        for (const t of normalizeTags(c.tags)) tags.add(t);
+      }
+
+      categorySel.innerHTML = `<option value="">All categories</option>`;
+      Array.from(categories).sort((a,b)=>a.localeCompare(b)).forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        categorySel.appendChild(opt);
+      });
+
+      tagSel.innerHTML = `<option value="">All tags</option>`;
+      Array.from(tags).sort((a,b)=>a.localeCompare(b)).forEach(tag => {
+        const opt = document.createElement("option");
+        opt.value = tag;
+        opt.textContent = tag;
+        tagSel.appendChild(opt);
+      });
+    }
+
+    // ---------------------------
+    // Rendering
+    // ---------------------------
+    function renderComics() {
+      grid.innerHTML = "";
+
+      empty.style.display = filteredComics.length ? "none" : "block";
+      if (!filteredComics.length) return;
+
+      const favs = getFavSet();
+
+      for (const c of filteredComics) {
+        const slug = c.slug;
+        const isFav = favs.has(slug);
+        const cover = c.coverUrl || "";
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+          <a href="reader.html?slug=${encodeURIComponent(slug)}">
+            <img class="cover"
+                 src="${cover}"
+                 alt="${escapeHtml(c.title || "Comic")}"
+                 loading="lazy"
+                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22600%22%3E%3Crect fill=%22%23333%22 width=%22400%22 height=%22600%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2224%22%3ENo Image%3C/text%3E%3C/svg%3E'"/>
+          </a>
+
+          <div class="favBtn ${isFav ? "on" : ""}" title="Toggle favorite" data-slug="${escapeHtml(slug)}">
+            <span>${isFav ? "⭐" : "☆"}</span>
+          </div>
+
+          <div class="cardbody">
+  <div class="ctitle" title="${escapeHtml(c.title || "")}">
+    ${escapeHtml(c.title || "Untitled")}
+  </div>
+
+  <div class="auth">
+    ${escapeHtml((c.author && c.author.displayName) ? c.author.displayName : "Unknown")}
+  </div>
+
+  <a href="reader.html?slug=${encodeURIComponent(slug)}">
+    <button class="openbtn" type="button">Read</button>
+  </a>
+
+  ${canEdit ? `
+    <button class="openbtn"
+      style="margin-top:6px;border-color:#e11d48"
+      onclick="location.href='edit-comic.html?slug=${encodeURIComponent(slug)}'">
+      Edit
+    </button>
+  ` : ""}
+</div>
+        `;
+
+        grid.appendChild(card);
+      }
+
+      grid.querySelectorAll(".favBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const slug = btn.getAttribute("data-slug");
+          toggleFavorite(slug);
+        });
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function toggleFavorite(slug) {
+      const favs = getFavSet();
+      if (favs.has(slug)) favs.delete(slug);
+      else favs.add(slug);
+      setFavSet(favs);
+      applyFilters();
+    }
+
+    // ---------------------------
+    // Filtering
+    // ---------------------------
+    function applyFilters() {
+      const term = safeLower(q.value).trim();
+      const cat = String(categorySel.value || "").trim();
+      const tag = String(tagSel.value || "").trim();
+      const favOnly = getFavOnly();
+      const favs = getFavSet();
+
+      filteredComics = allComics.filter(c => {
+        if (favOnly && !favs.has(c.slug)) return false;
+        if (cat && String(c.category || "").trim() !== cat) return false;
+
+        if (tag) {
+          const tags = normalizeTags(c.tags);
+          if (!tags.some(t => String(t).trim() === tag)) return false;
+        }
+
+        if (term) {
+          const hay = [
+            safeLower(c.title),
+            safeLower(c.description),
+            safeLower(c.category),
+            safeLower(c.author && c.author.displayName),
+            normalizeTags(c.tags).map(safeLower).join(" ")
+          ].join(" ");
+          if (!hay.includes(term)) return false;
+        }
+
+        return true;
+      });
+
+      const bits = [];
+      if (cat) bits.push(`Category: ${cat}`);
+      if (tag) bits.push(`Tag: ${tag}`);
+      if (favOnly) bits.push("Favorites only");
+      hint.textContent = bits.length ? bits.join(" • ") : "";
+
+      saveFilterState();
+      renderComics();
+    }
+
+    // ---------------------------
+    // Persist filter state
+    // ---------------------------
+    const FILTER_STATE_KEY = "indexFilters";
+    function saveFilterState() {
+      try {
+        localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({
+          q: q.value || "",
+          category: categorySel.value || "",
+          tag: tagSel.value || ""
+        }));
+      } catch {}
+    }
+    function restoreFilterState() {
+      try {
+        const raw = localStorage.getItem(FILTER_STATE_KEY);
+        if (!raw) return;
+        const st = JSON.parse(raw);
+        if (typeof st.q === "string") q.value = st.q;
+        if (typeof st.category === "string") categorySel.value = st.category;
+        if (typeof st.tag === "string") tagSel.value = st.tag;
+      } catch {}
+    }
+
+    // ---------------------------
+    // Events
+    // ---------------------------
+    q.addEventListener("input", applyFilters);
+    categorySel.addEventListener("change", applyFilters);
+    tagSel.addEventListener("change", applyFilters);
+
+    document.getElementById("clear").addEventListener("click", () => {
+      q.value = "";
+      categorySel.value = "";
+      tagSel.value = "";
+      applyFilters();
+      q.focus();
+    });
+
+    favOnlyBtn.addEventListener("click", () => {
+      setFavOnly(!getFavOnly());
+      applyFilters();
+    });
+
+    // Init
+    updateFavCount();
+    applyFavOnlyUI();
+    initEditPermission().then(() => {
+  initUploadNav();
+  loadComics();
+});
+
+  </script>
+</body>
+</html>
