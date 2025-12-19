@@ -177,144 +177,140 @@
   </div>
 
 <script>
-  // author.html
-const API = "https://three4vault-backend.onrender.com";
+  const API = "https://three4vault-backend.onrender.com";
 
+  const meCard = document.getElementById("meCard");
+  const loginCard = document.getElementById("loginCard");
 
+  const avatar = document.getElementById("avatar");
+  const displayName = document.getElementById("displayName");
+  const emailEl = document.getElementById("email");
+  const pills = document.getElementById("pills");
 
-    const meCard = document.getElementById("meCard");
-    const loginCard = document.getElementById("loginCard");
+  const meMsg = document.getElementById("meMsg");
+  const loginMsg = document.getElementById("loginMsg");
 
-    const avatar = document.getElementById("avatar");
-    const displayName = document.getElementById("displayName");
-    const emailEl = document.getElementById("email");
-    const pills = document.getElementById("pills");
+  const loginEmail = document.getElementById("loginEmail");
+  const loginPass = document.getElementById("loginPass");
 
-    const meMsg = document.getElementById("meMsg");
-    const loginMsg = document.getElementById("loginMsg");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const uploadNav = document.getElementById("uploadNav");
 
-    const loginEmail = document.getElementById("loginEmail");
-    const loginPass = document.getElementById("loginPass");
+  function setMsg(el, text, kind) {
+    el.className = "msg" + (kind ? (" " + kind) : "");
+    el.textContent = text || "";
+  }
 
-    const uploadBtn = document.getElementById("uploadBtn");
-    const uploadNav = document.getElementById("uploadNav");
+  function makePill(text, plus=false) {
+    const d = document.createElement("div");
+    d.className = "pill" + (plus ? " plus" : "");
+    d.textContent = text;
+    return d;
+  }
 
-    function setMsg(el, text, kind) {
-      el.className = "msg" + (kind ? (" " + kind) : "");
-      el.textContent = text || "";
-    }
+  function canUpload(role) {
+    const r = String(role || "USER").toUpperCase();
+    return ["OWNER","ADMIN","AUTHOR"].includes(r);
+  }
 
-    function makePill(text, plus=false) {
-      const d = document.createElement("div");
-      d.className = "pill" + (plus ? " plus" : "");
-      d.textContent = text;
-      return d;
-    }
+  function renderMe(user) {
+    const dn = user.displayName || user.email || "Me";
+    document.title = `${dn} — Me`;
+    avatar.textContent = dn.trim().charAt(0).toUpperCase();
+    displayName.textContent = dn;
+    emailEl.textContent = user.email || "—";
 
-    function canUpload(role) {
-      const r = String(role || "USER").toUpperCase();
-      return ["OWNER","ADMIN","AUTHOR"].includes(r);
-    }
+    const role = String(user.role || "USER").toUpperCase();
 
-    function renderMe(user) {
-      const dn = user.displayName || user.email || "Me";
-      document.title = `${dn} — Me`;
-      avatar.textContent = dn.trim().charAt(0).toUpperCase();
-      displayName.textContent = dn;
-      emailEl.textContent = user.email || "—";
+    pills.innerHTML = "";
+    pills.appendChild(makePill(role));
+    if (user.isPlus) pills.appendChild(makePill("PLUS", true));
+    if (user.userNumber != null) pills.appendChild(makePill(`#${user.userNumber}`));
 
-      const role = String(user.role || "USER").toUpperCase();
+    const showUpload = canUpload(role);
+    uploadBtn.style.display = showUpload ? "inline-flex" : "none";
+    uploadNav.style.display = showUpload ? "flex" : "none";
 
-      pills.innerHTML = "";
-      pills.appendChild(makePill(role));
-      if (user.isPlus) pills.appendChild(makePill("PLUS", true));
-      if (user.userNumber != null) pills.appendChild(makePill(`#${user.userNumber}`));
+    meCard.style.display = "block";
+    loginCard.style.display = "none";
+  }
 
-      const showUpload = canUpload(role);
-      uploadBtn.style.display = showUpload ? "inline-flex" : "none";
-      uploadNav.style.display = showUpload ? "flex" : "none";
-
-      meCard.style.display = "block";
-      loginCard.style.display = "none";
-    }
-
-    async function loadMe() {
-      try {
-        const res = await fetch(`${API}/api/me`, { credentials: "include" });
-        if (res.status === 401) {
-          meCard.style.display = "none";
-          loginCard.style.display = "block";
-          uploadBtn.style.display = "none";
-          uploadNav.style.display = "none";
-          setMsg(loginMsg, "Not logged in.", "");
-          return;
-        }
-        if (!res.ok) throw new Error("Failed to load /api/me");
-        const user = await res.json();
-        renderMe(user);
-        setMsg(meMsg, "", "");
-      } catch (e) {
-        console.error(e);
+  async function loadMe() {
+    try {
+      const res = await fetch(`${API}/api/me`, { credentials: "include" });
+      if (res.status === 401) {
         meCard.style.display = "none";
         loginCard.style.display = "block";
         uploadBtn.style.display = "none";
         uploadNav.style.display = "none";
-        setMsg(loginMsg, "Backend error. Make sure https://three4vault-backend.onrender.com
- is running.", "error");
+        setMsg(loginMsg, "Not logged in.", "");
+        return;
       }
+      if (!res.ok) throw new Error("Failed to load /api/me");
+      const user = await res.json();
+      renderMe(user);
+      setMsg(meMsg, "", "");
+    } catch (e) {
+      console.error(e);
+      meCard.style.display = "none";
+      loginCard.style.display = "block";
+      uploadBtn.style.display = "none";
+      uploadNav.style.display = "none";
+      setMsg(loginMsg, "Backend error. Make sure the backend is running.", "error");
+    }
+  }
+
+  async function login() {
+    const email = String(loginEmail.value || "").trim();
+    const password = String(loginPass.value || "");
+
+    if (!email || !password) {
+      setMsg(loginMsg, "Email + password required.", "error");
+      return;
     }
 
-    async function login() {
-      const email = String(loginEmail.value || "").trim();
-      const password = String(loginPass.value || "");
+    setMsg(loginMsg, "Logging in…", "");
+    try {
+      const res = await fetch(`${API}/api/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
 
-      if (!email || !password) {
-        setMsg(loginMsg, "Email + password required.", "error");
+      if (!res.ok) {
+        let msg = "Login failed.";
+        try {
+          const data = await res.json();
+          if (data && data.error) msg = data.error;
+        } catch {}
+        setMsg(loginMsg, msg, "error");
         return;
       }
 
-      setMsg(loginMsg, "Logging in…", "");
-      try {
-        const res = await fetch(`${API}/api/auth/login`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
-
-        if (!res.ok) {
-          let msg = "Login failed.";
-          try {
-            const data = await res.json();
-            if (data && data.error) msg = data.error;
-          } catch {}
-          setMsg(loginMsg, msg, "error");
-          return;
-        }
-
-        setMsg(loginMsg, "Logged in.", "ok");
-        await loadMe();
-      } catch (e) {
-        console.error(e);
-        setMsg(loginMsg, "Network error while logging in.", "error");
-      }
-    }
-
-    async function logout() {
-      setMsg(meMsg, "Logging out…", "");
-      try {
-        await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
-      } catch {}
+      setMsg(loginMsg, "Logged in.", "ok");
       await loadMe();
+    } catch (e) {
+      console.error(e);
+      setMsg(loginMsg, "Network error while logging in.", "error");
     }
+  }
 
-    document.getElementById("loginBtn").addEventListener("click", login);
-    document.getElementById("logoutBtn").addEventListener("click", logout);
+  async function logout() {
+    setMsg(meMsg, "Logging out…", "");
+    try {
+      await fetch(`${API}/api/auth/logout`, { method: "POST", credentials: "include" });
+    } catch {}
+    await loadMe();
+  }
 
-    loginPass.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
-    loginEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+  document.getElementById("loginBtn").addEventListener("click", login);
+  document.getElementById("logoutBtn").addEventListener("click", logout);
 
-    loadMe();
-  </script>
+  loginPass.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+  loginEmail.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+
+  loadMe();
+</script>
 </body>
 </html>
