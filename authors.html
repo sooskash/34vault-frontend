@@ -149,7 +149,8 @@
   </div>
 
   <script>
-    const API = "http://localhost:3001";
+    const API = "https://three4vault-backend.onrender.com
+";
     const q = document.getElementById("q");
     const sortSel = document.getElementById("sort");
     const listEl = document.getElementById("list");
@@ -253,7 +254,8 @@
         console.error(e);
         loadingEl.style.display = "none";
         emptyEl.style.display = "block";
-        emptyEl.textContent = "Failed to load authors. Make sure backend is running on http://localhost:3001";
+        emptyEl.textContent = "Failed to load authors. Make sure backend is running on https://three4vault-backend.onrender.com
+";
       }
     }
 
